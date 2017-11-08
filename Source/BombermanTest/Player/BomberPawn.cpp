@@ -4,7 +4,7 @@
 #include "Runtime/Engine/Classes/Components/InputComponent.h"
 #include "Runtime/Engine/Classes/Engine/World.h"
 #include "Bomb.h"
-
+#include "LevelGrid.h"
 
 
 // Sets default values
@@ -72,7 +72,7 @@ void ABomberPawn::MoveYAxis(float AxisValue)
 
 
 void ABomberPawn::PlaceBomb()
-{
+{	
 	ABomb* AvailableBomb = NULL;
 	for (int bombIndex = 0; bombIndex < BombPool.Num(); ++bombIndex)
 	{

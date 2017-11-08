@@ -34,6 +34,9 @@ public:
 	void ExitCell(ICellOccupantInterface* CellOccuppant, FVector2D Cell);
 	void ChangeCell(ICellOccupantInterface* CellOccuppant, FVector2D OldCell, FVector2D NewCell);
 
+	void GenerateLevel(int RandomSeed = 0);
+
+
 	FVector2D GetCellFromWorldCoordinates(FVector2D WorldCoordinates);
 	FVector2D GetWorldCoordinatesFromCell(FVector2D Cell);
 	
@@ -41,10 +44,10 @@ public:
 	float CellSize = 100;
 
 	UPROPERTY(EditInstanceOnly)
-	float GridWidth = 5;
+	int GridWidth = 5;
 
 	UPROPERTY(EditInstanceOnly)
-	float GridHeight = 5;
+	int GridHeight = 5;
 
 	TMap<FVector2D, TSet<ICellOccupantInterface*>> CellOccupants;
 

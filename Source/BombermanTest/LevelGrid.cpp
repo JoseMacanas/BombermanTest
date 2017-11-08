@@ -19,35 +19,45 @@ void ALevelGrid::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	GenerateLevel();
+}
+
+
+// Called every frame
+void ALevelGrid::GenerateLevel(int RandomSeed)
+{
+	FRandomStream RandomNumberGenerator;
+	RandomNumberGenerator.Initialize(RandomSeed);
+	
 	UWorld* const World = GetWorld();
-	if (World)
+	if (World && BorderBlockBPClass && SolidBlockBPClass)
 	{
 		for (int RowIndex = 0; RowIndex < GridHeight + 2; ++RowIndex)
 		{
 			for (int ColumnIndex = 0; ColumnIndex < GridWidth + 2; ++ColumnIndex)
 			{
-				FVector2D BlockPosition = GetWorldCoordinatesFromCell(FVector2D(RowIndex, ColumnIndex));
+				FVector2D Cell = FVector2D(RowIndex, ColumnIndex);
+				FVector2D BlockPosition = GetWorldCoordinatesFromCell(Cell);
 
 				if (ColumnIndex == 0 || RowIndex == 0 || ColumnIndex == GridWidth + 1 || RowIndex == GridHeight + 1)
 				{
-					if (BorderBlockBPClass)
-					{
-						FActorSpawnParameters SpawnParams;
-						World->SpawnActor<ABlock>(BorderBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
-					}
+					FActorSpawnParameters SpawnParams;
+					ABlock* Block = World->SpawnActor<ABlock>(BorderBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+
+					EnterCell(Block, Cell);
 				}
 				else if (RowIndex % 2 == 0 && ColumnIndex % 2 == 0)
 				{
-					if (SolidBlockBPClass)
-					{
-						FActorSpawnParameters SpawnParams;
-						World->SpawnActor<ABlock>(SolidBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
-					}
+					FActorSpawnParameters SpawnParams;
+					ABlock* Block = World->SpawnActor<ABlock>(SolidBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+
+					EnterCell(Block, Cell);
 				}
 			}
 		}
 	}
 }
+
 
 // Called every frame
 void ALevelGrid::Tick(float DeltaTime)

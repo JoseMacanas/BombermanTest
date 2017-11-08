@@ -7,6 +7,7 @@
 #include "BomberPawn.generated.h"
 
 class ABomb;
+class ALevelGrid;
 
 UCLASS()
 class BOMBERMANTEST_API ABomberPawn : public APawn
@@ -49,4 +50,7 @@ public:
 	
 	UPROPERTY()
 	TArray<ABomb*> BombPool;
+	
+	UPROPERTY(EditInstanceOnly)
+	ALevelGrid* LevelGrid;
 };
