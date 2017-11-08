@@ -36,7 +36,7 @@ void ALevelGrid::GenerateLevel(int RandomSeed)
 		{
 			for (int ColumnIndex = 0; ColumnIndex < GridWidth + 2; ++ColumnIndex)
 			{
-				FVector2D Cell = FVector2D(RowIndex, ColumnIndex);
+				FIntPoint Cell = FIntPoint(RowIndex, ColumnIndex);
 				FVector2D BlockPosition = GetWorldCoordinatesFromCell(Cell);
 
 				if (ColumnIndex == 0 || RowIndex == 0 || ColumnIndex == GridWidth + 1 || RowIndex == GridHeight + 1)
@@ -66,7 +66,7 @@ void ALevelGrid::Tick(float DeltaTime)
 
 }
 
-void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FVector2D Cell)
+void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell)
 {
 	if (!CellOccupants.Contains(Cell))
 	{
@@ -79,7 +79,7 @@ void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FVector2D Cell
 	}
 }
 
-void ALevelGrid::ExitCell(ICellOccupantInterface* CellOccuppant, FVector2D Cell)
+void ALevelGrid::ExitCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell)
 {
 	if (CellOccupants.Contains(Cell))
 	{
@@ -91,35 +91,37 @@ void ALevelGrid::ExitCell(ICellOccupantInterface* CellOccuppant, FVector2D Cell)
 	}
 }
 
-void ALevelGrid::ChangeCell(ICellOccupantInterface* CellOccuppant, FVector2D OldCell, FVector2D NewCell)
+void ALevelGrid::ChangeCell(ICellOccupantInterface* CellOccuppant, FIntPoint OldCell, FIntPoint NewCell)
 {
 	ExitCell(CellOccuppant, OldCell);
 	EnterCell(CellOccuppant, NewCell);
 }
 
-FVector2D ALevelGrid::GetCellFromWorldCoordinates(FVector2D WorldCoordinates)
+FIntPoint ALevelGrid::GetCellFromWorldCoordinates(FVector2D WorldCoordinates)
 {
-	FVector2D Cell = FVector2D::ZeroVector;
+	FIntPoint Cell = FIntPoint::ZeroValue;
 
 	if (CellSize > 0)
 	{
 		FVector GridPosition = GetActorLocation();
 		FVector2D GridPosition2D = FVector2D(GridPosition.X, GridPosition.Y);
 
-		Cell = (WorldCoordinates - GridPosition2D) / CellSize;
+		FVector2D CellPosition = (WorldCoordinates - GridPosition2D) / CellSize;
+		
+		Cell = CellPosition.IntPoint();	
 	}
 
 	return Cell;
 }
 
-FVector2D ALevelGrid::GetWorldCoordinatesFromCell(FVector2D Cell)
+FVector2D ALevelGrid::GetWorldCoordinatesFromCell(FIntPoint Cell)
 {
 	FVector2D WorldCoordinates = FVector2D::ZeroVector;
 
 	FVector GridPosition = GetActorLocation();
 	FVector2D GridPosition2D = FVector2D(GridPosition.X, GridPosition.Y);
 
-	WorldCoordinates = Cell*CellSize + GridPosition2D;
+	WorldCoordinates = FVector2D(Cell)*CellSize + GridPosition2D;
 
 	return WorldCoordinates;
 }

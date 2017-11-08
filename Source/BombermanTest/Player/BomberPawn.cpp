@@ -88,6 +88,13 @@ void ABomberPawn::PlaceBomb()
 
 	if (AvailableBomb)
 	{
-		AvailableBomb->PlaceInWorld(GetActorLocation());
+		FVector ActorLocation = GetActorLocation();
+		FVector2D ActorLocation2D = FVector2D(ActorLocation.X, ActorLocation.Y);
+		if (LevelGrid)
+		{
+			FVector2D BombPosition2D = LevelGrid->GetWorldCoordinatesFromCell(LevelGrid->GetCellFromWorldCoordinates(ActorLocation2D));
+			FVector BombPosition = FVector(BombPosition2D.X, BombPosition2D.Y, ActorLocation.Z);
+			AvailableBomb->PlaceInWorld(BombPosition);
+		}
 	}
 }

@@ -30,15 +30,15 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void EnterCell(ICellOccupantInterface* CellOccuppant, FVector2D Cell);
-	void ExitCell(ICellOccupantInterface* CellOccuppant, FVector2D Cell);
-	void ChangeCell(ICellOccupantInterface* CellOccuppant, FVector2D OldCell, FVector2D NewCell);
+	void EnterCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell);
+	void ExitCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell);
+	void ChangeCell(ICellOccupantInterface* CellOccuppant, FIntPoint OldCell, FIntPoint NewCell);
 
 	void GenerateLevel(int RandomSeed = 0);
 
 
-	FVector2D GetCellFromWorldCoordinates(FVector2D WorldCoordinates);
-	FVector2D GetWorldCoordinatesFromCell(FVector2D Cell);
+	FIntPoint GetCellFromWorldCoordinates(FVector2D WorldCoordinates);
+	FVector2D GetWorldCoordinatesFromCell(FIntPoint Cell);
 	
 	UPROPERTY(EditInstanceOnly)
 	float CellSize = 100;
@@ -49,7 +49,7 @@ public:
 	UPROPERTY(EditInstanceOnly)
 	int GridHeight = 5;
 
-	TMap<FVector2D, TSet<ICellOccupantInterface*>> CellOccupants;
+	TMap<FIntPoint, TSet<ICellOccupantInterface*>> CellOccupants;
 
 	UPROPERTY(EditDefaultsOnly)
 	UClass* SolidBlockBPClass;
