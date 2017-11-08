@@ -2,6 +2,8 @@
 
 #include "LevelGrid.h"
 #include "CellOccupantInterface.h"
+#include "Block.h"
+#include "Runtime/Engine/Classes/Engine/World.h"
 
 
 // Sets default values
@@ -17,6 +19,34 @@ void ALevelGrid::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	UWorld* const World = GetWorld();
+	if (World)
+	{
+		for (int RowIndex = 0; RowIndex < GridHeight + 2; ++RowIndex)
+		{
+			for (int ColumnIndex = 0; ColumnIndex < GridWidth + 2; ++ColumnIndex)
+			{
+				FVector2D BlockPosition = GetWorldCoordinatesFromCell(FVector2D(RowIndex, ColumnIndex));
+
+				if (ColumnIndex == 0 || RowIndex == 0 || ColumnIndex == GridWidth + 1 || RowIndex == GridHeight + 1)
+				{
+					if (BorderBlockBPClass)
+					{
+						FActorSpawnParameters SpawnParams;
+						World->SpawnActor<ABlock>(BorderBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+					}
+				}
+				else if (RowIndex % 2 == 0 && ColumnIndex % 2 == 0)
+				{
+					if (SolidBlockBPClass)
+					{
+						FActorSpawnParameters SpawnParams;
+						World->SpawnActor<ABlock>(SolidBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+					}
+				}
+			}
+		}
+	}
 }
 
 // Called every frame
@@ -61,7 +91,26 @@ FVector2D ALevelGrid::GetCellFromWorldCoordinates(FVector2D WorldCoordinates)
 {
 	FVector2D Cell = FVector2D::ZeroVector;
 
-	//TODO
+	if (CellSize > 0)
+	{
+		FVector GridPosition = GetActorLocation();
+		FVector2D GridPosition2D = FVector2D(GridPosition.X, GridPosition.Y);
+
+		Cell = (WorldCoordinates - GridPosition2D) / CellSize;
+	}
 
 	return Cell;
 }
+
+FVector2D ALevelGrid::GetWorldCoordinatesFromCell(FVector2D Cell)
+{
+	FVector2D WorldCoordinates = FVector2D::ZeroVector;
+
+	FVector GridPosition = GetActorLocation();
+	FVector2D GridPosition2D = FVector2D(GridPosition.X, GridPosition.Y);
+
+	WorldCoordinates = Cell*CellSize + GridPosition2D;
+
+	return WorldCoordinates;
+}
+

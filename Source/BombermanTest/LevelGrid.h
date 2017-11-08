@@ -35,10 +35,10 @@ public:
 	void ChangeCell(ICellOccupantInterface* CellOccuppant, FVector2D OldCell, FVector2D NewCell);
 
 	FVector2D GetCellFromWorldCoordinates(FVector2D WorldCoordinates);
+	FVector2D GetWorldCoordinatesFromCell(FVector2D Cell);
 	
-
 	UPROPERTY(EditInstanceOnly)
-	float CellSize = 1;
+	float CellSize = 100;
 
 	UPROPERTY(EditInstanceOnly)
 	float GridWidth = 5;
@@ -47,4 +47,13 @@ public:
 	float GridHeight = 5;
 
 	TMap<FVector2D, TSet<ICellOccupantInterface*>> CellOccupants;
+
+	UPROPERTY(EditDefaultsOnly)
+	UClass* SolidBlockBPClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	UClass* BorderBlockBPClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	UClass* BreakableBlockBPClass;
 };

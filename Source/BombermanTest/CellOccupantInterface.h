@@ -15,7 +15,6 @@ class ICellOccupantInterface
 {
 	GENERATED_BODY()
 
-public:
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
-	void OnDamaged();
+public:	
+	virtual bool OnDamaged() = 0;
 };
