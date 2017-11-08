@@ -37,8 +37,10 @@ public:
 	void GenerateLevel(int RandomSeed = 0);
 
 
-	FIntPoint GetCellFromWorldCoordinates(FVector2D WorldCoordinates);
-	FVector2D GetWorldCoordinatesFromCell(FIntPoint Cell);
+	FIntPoint GetCellFromWorldCoordinates(FVector2D WorldCoordinates) const;
+	FVector2D GetWorldCoordinatesFromCell(FIntPoint Cell) const;
+	bool CanPlaceBomb(FIntPoint Cell) const;
+
 	
 	UPROPERTY(EditInstanceOnly)
 	float CellSize = 100;

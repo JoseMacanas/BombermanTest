@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Bomb.h"
+#include "LevelGrid.h"
 
 
 // Sets default values
@@ -34,21 +35,64 @@ void ABomb::Tick(float DeltaTime)
 	}
 }
 
-void ABomb::PlaceInWorld(FVector Location)
+bool ABomb::PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell)
 {
-	ExplodeTimer = ExplodeDelay;
-	bPlacedInWorld = true;
-	SetActorLocation(Location);
-	SetActorHiddenInGame(false);
-	SetActorEnableCollision(true);
-	SetActorTickEnabled(true);
+	if (OccupiedLevelGrid)
+	{
+		CurrentLevelGrid = OccupiedLevelGrid;
+		CurrentCell = Cell;
+		
+		if (CurrentLevelGrid->CanPlaceBomb(CurrentCell))
+		{
+			ExplodeTimer = ExplodeDelay;
+			bPlacedInWorld = true;
+			
+			FVector2D BombPosition2D = CurrentLevelGrid->GetWorldCoordinatesFromCell(CurrentCell);
+			FVector BombPosition = FVector(BombPosition2D.X, BombPosition2D.Y, CurrentLevelGrid->GetActorLocation().Z);
+
+			SetActorLocation(BombPosition);
+			SetActorHiddenInGame(false);
+			SetActorEnableCollision(true);
+			SetActorTickEnabled(true);
+
+			CurrentLevelGrid->EnterCell(this, CurrentCell);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void ABomb::Explode()
 {
+	if (CurrentLevelGrid)
+	{
+		CurrentLevelGrid->ExitCell(this, CurrentCell);
+	}
+
 	bPlacedInWorld = false;
 	SetActorHiddenInGame(true);
 	SetActorTickEnabled(false);
 	SetActorEnableCollision(false);
+
+
+	CurrentLevelGrid = NULL;
 }
 
+
+bool ABomb::OnDamaged()
+{
+	if (CurrentLevelGrid)
+	{
+
+	}
+
+	bPlacedInWorld = false;
+	SetActorHiddenInGame(true);
+	SetActorTickEnabled(false);
+	SetActorEnableCollision(false);
+
+
+	CurrentLevelGrid = NULL;
+	return true;
+}

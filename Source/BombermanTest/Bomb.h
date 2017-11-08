@@ -4,10 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "CellOccupantInterface.h"
+
+class ALevelGrid;
+
+
 #include "Bomb.generated.h"
 
 UCLASS()
-class BOMBERMANTEST_API ABomb : public AActor
+class BOMBERMANTEST_API ABomb : public AActor, public ICellOccupantInterface
 {
 	GENERATED_BODY()
 	
@@ -23,7 +28,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void PlaceInWorld(FVector Location);
+	virtual bool OnDamaged() override;
+
+	bool PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell);
 
 	void Explode();	
 
@@ -33,4 +40,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ExplodeDelay = 3.0f;
+
+	UPROPERTY()
+	ALevelGrid* CurrentLevelGrid;
+
+	UPROPERTY()
+	FIntPoint CurrentCell;
 };

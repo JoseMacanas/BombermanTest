@@ -3,6 +3,7 @@
 #include "LevelGrid.h"
 #include "CellOccupantInterface.h"
 #include "Block.h"
+#include "Bomb.h"
 #include "Runtime/Engine/Classes/Engine/World.h"
 
 
@@ -72,7 +73,7 @@ void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell
 	{
 		CellOccupants.Add(Cell, TSet<ICellOccupantInterface*>()); 
 	}
-	TSet<ICellOccupantInterface*> CellSet = CellOccupants[Cell];
+	TSet<ICellOccupantInterface*>& CellSet = CellOccupants[Cell];
 	if (!CellSet.Contains(CellOccuppant))
 	{
 		CellSet.Add(CellOccuppant);
@@ -83,7 +84,7 @@ void ALevelGrid::ExitCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell)
 {
 	if (CellOccupants.Contains(Cell))
 	{
-		TSet<ICellOccupantInterface*> CellSet = CellOccupants[Cell];
+		TSet<ICellOccupantInterface*>& CellSet = CellOccupants[Cell];
 		if (CellSet.Contains(CellOccuppant))
 		{
 			CellSet.Remove(CellOccuppant);
@@ -97,7 +98,7 @@ void ALevelGrid::ChangeCell(ICellOccupantInterface* CellOccuppant, FIntPoint Old
 	EnterCell(CellOccuppant, NewCell);
 }
 
-FIntPoint ALevelGrid::GetCellFromWorldCoordinates(FVector2D WorldCoordinates)
+FIntPoint ALevelGrid::GetCellFromWorldCoordinates(FVector2D WorldCoordinates) const
 {
 	FIntPoint Cell = FIntPoint::ZeroValue;
 
@@ -114,7 +115,7 @@ FIntPoint ALevelGrid::GetCellFromWorldCoordinates(FVector2D WorldCoordinates)
 	return Cell;
 }
 
-FVector2D ALevelGrid::GetWorldCoordinatesFromCell(FIntPoint Cell)
+FVector2D ALevelGrid::GetWorldCoordinatesFromCell(FIntPoint Cell) const
 {
 	FVector2D WorldCoordinates = FVector2D::ZeroVector;
 
@@ -126,3 +127,21 @@ FVector2D ALevelGrid::GetWorldCoordinatesFromCell(FIntPoint Cell)
 	return WorldCoordinates;
 }
 
+
+bool ALevelGrid::CanPlaceBomb(FIntPoint Cell) const
+{
+	if (CellOccupants.Contains(Cell))
+	{
+		TSet<ICellOccupantInterface*> CellSet = CellOccupants[Cell];
+
+		for (auto& Elem : CellSet)
+		{
+			if (Cast<ABomb>(Elem) || Cast<ABlock>(Elem))
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}

@@ -5,6 +5,7 @@
 #include "Runtime/Engine/Classes/Engine/World.h"
 #include "Bomb.h"
 #include "LevelGrid.h"
+#include "Engine.h"
 
 
 // Sets default values
@@ -92,9 +93,14 @@ void ABomberPawn::PlaceBomb()
 		FVector2D ActorLocation2D = FVector2D(ActorLocation.X, ActorLocation.Y);
 		if (LevelGrid)
 		{
-			FVector2D BombPosition2D = LevelGrid->GetWorldCoordinatesFromCell(LevelGrid->GetCellFromWorldCoordinates(ActorLocation2D));
-			FVector BombPosition = FVector(BombPosition2D.X, BombPosition2D.Y, ActorLocation.Z);
-			AvailableBomb->PlaceInWorld(BombPosition);
+			FIntPoint CurrentCell = LevelGrid->GetCellFromWorldCoordinates(ActorLocation2D);
+			if (AvailableBomb->PlaceInWorld(LevelGrid, CurrentCell))
+			{
+				if (GEngine)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Bomb placed at %d - %d!"), CurrentCell.X, CurrentCell.Y));
+				}
+			}	
 		}
 	}
 }
