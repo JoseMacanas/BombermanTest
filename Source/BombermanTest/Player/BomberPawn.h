@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "CellOccupantInterface.h"
 #include "BomberPawn.generated.h"
 
 class ABomb;
 class ALevelGrid;
 
 UCLASS()
-class BOMBERMANTEST_API ABomberPawn : public APawn
+class BOMBERMANTEST_API ABomberPawn : public APawn, public ICellOccupantInterface
 {
 	GENERATED_BODY()
 
@@ -28,7 +29,8 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
+	virtual bool OnDamaged() override;
 	
 	void MoveXAxis(float AxisValue);
 	void MoveYAxis(float AxisValue);
@@ -42,6 +44,9 @@ public:
 	UPROPERTY(EditInstanceOnly)
 	int PlayerId = 0;
 
+	UPROPERTY(EditInstanceOnly)
+	FIntPoint StartingCell = FIntPoint(0,0);
+
 	UPROPERTY(EditDefaultsOnly)
 	UClass* BombBPClass;
 
@@ -53,4 +58,8 @@ public:
 	
 	UPROPERTY(EditInstanceOnly)
 	ALevelGrid* LevelGrid;
+
+
+	UPROPERTY()
+	FIntPoint CurrentCell;
 };

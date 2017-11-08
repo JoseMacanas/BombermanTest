@@ -34,8 +34,17 @@ void ABomberPawn::BeginPlay()
 				BombPool[bombIndex] = World->SpawnActor<ABomb>(BombBPClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
 			}
 		}
-	}	
+	}
+
+	if (LevelGrid)
+	{
+		FVector2D StartingLocation2D = LevelGrid->GetWorldCoordinatesFromCell(StartingCell);
+		FVector StartingLocation = FVector(StartingLocation2D.X, StartingLocation2D.Y, LevelGrid->GetActorLocation().Z);
+		SetActorLocation(StartingLocation);
+		CurrentCell = StartingCell;
+	}
 }
+
 
 // Called every frame
 void ABomberPawn::Tick(float DeltaTime)
@@ -44,9 +53,63 @@ void ABomberPawn::Tick(float DeltaTime)
 
 	if (!CurrentVelocity.IsZero())
 	{
-		FVector NewLocation = GetActorLocation() + (CurrentVelocity * DeltaTime);
-		NewLocation.Z = 0;
-		SetActorLocation(NewLocation);
+		FVector CurrentActorLocation = GetActorLocation();
+		FVector2D CurrentActorLocation2D = FVector2D(CurrentActorLocation.X, CurrentActorLocation.Y);
+		FVector DeltaMovement = CurrentVelocity * DeltaTime;
+
+		if (LevelGrid)
+		{
+			FVector2D CurrentCellWorldLocation = LevelGrid->GetWorldCoordinatesFromCell(CurrentCell);
+			FVector2D CellOffset = CurrentCellWorldLocation - CurrentActorLocation2D;
+
+			FVector2D NextHorizontalLocation = CurrentActorLocation2D + FVector2D((FMath::Sign(DeltaMovement.X)*LevelGrid->CellSize*0.5f + DeltaMovement.X), 0);
+			FVector2D NextVerticalLocation = CurrentActorLocation2D + FVector2D(0,(FMath::Sign(DeltaMovement.Y)*LevelGrid->CellSize*0.5f + DeltaMovement.Y));
+
+			FIntPoint NextHorizontalCell = LevelGrid->GetCellFromWorldCoordinates(NextHorizontalLocation);
+			FIntPoint NextVerticalCell = LevelGrid->GetCellFromWorldCoordinates(NextVerticalLocation);
+
+
+			// Prevent moving into a Bomb or into a wall, but allow moving around on top of a Bomb that was just placed
+			if (NextHorizontalCell != CurrentCell && !LevelGrid->IsCellWalkable(NextHorizontalCell))
+			{
+				DeltaMovement.X = 0;
+			}
+			if (NextVerticalCell != CurrentCell && !LevelGrid->IsCellWalkable(NextVerticalCell))
+			{
+				DeltaMovement.Y = 0;
+			}
+
+			// Arbitrarily give priority to one of the valid movement axes to prevent walking directions to compete when pressing two different directions (ex. up and down) at a junction
+			if (DeltaMovement.X != 0)
+			{
+				DeltaMovement.Y = 0;
+			}
+
+			// Center the character in the grid when changing axis of movement, with a little bit of tolerance to compensate for floating point errors
+			const float AxisChangeTolerance = 0.001f;
+			if (DeltaMovement.X != 0 && FMath::Abs(CellOffset.Y) > AxisChangeTolerance)
+			{
+				DeltaMovement.Y = FMath::Min(FMath::Abs(DeltaMovement.X), FMath::Abs(CellOffset.Y)) * FMath::Sign(CellOffset.Y);
+				DeltaMovement.X = 0;
+			}
+			else if (DeltaMovement.Y != 0 && FMath::Abs(CellOffset.X) > AxisChangeTolerance)
+			{
+				DeltaMovement.X = FMath::Min(FMath::Abs(DeltaMovement.Y), FMath::Abs(CellOffset.X)) * FMath::Sign(CellOffset.X);
+				DeltaMovement.Y = 0;
+			}
+			
+			FVector NewLocation = CurrentActorLocation + (DeltaMovement);
+			SetActorLocation(NewLocation);
+
+			FVector2D NewLocation2D = FVector2D(NewLocation.X, NewLocation.Y);
+			FIntPoint NewCell = LevelGrid->GetCellFromWorldCoordinates(NewLocation2D);
+			if (NewCell != CurrentCell)
+			{
+				LevelGrid->ChangeCell(this, CurrentCell, NewCell);
+				CurrentCell = NewCell;
+
+			}
+		}
 	}
 }
 
@@ -103,4 +166,11 @@ void ABomberPawn::PlaceBomb()
 			}	
 		}
 	}
+}
+
+
+bool ABomberPawn::OnDamaged()
+{
+	// TODO: Die
+	return true;
 }

@@ -39,7 +39,7 @@ public:
 
 	FIntPoint GetCellFromWorldCoordinates(FVector2D WorldCoordinates) const;
 	FVector2D GetWorldCoordinatesFromCell(FIntPoint Cell) const;
-	bool CanPlaceBomb(FIntPoint Cell) const;
+	bool IsCellWalkable(FIntPoint Cell) const;
 
 	
 	UPROPERTY(EditInstanceOnly)

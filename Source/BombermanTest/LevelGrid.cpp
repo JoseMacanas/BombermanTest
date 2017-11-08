@@ -128,7 +128,7 @@ FVector2D ALevelGrid::GetWorldCoordinatesFromCell(FIntPoint Cell) const
 }
 
 
-bool ALevelGrid::CanPlaceBomb(FIntPoint Cell) const
+bool ALevelGrid::IsCellWalkable(FIntPoint Cell) const
 {
 	if (CellOccupants.Contains(Cell))
 	{

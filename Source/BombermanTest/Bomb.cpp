@@ -42,7 +42,7 @@ bool ABomb::PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell)
 		CurrentLevelGrid = OccupiedLevelGrid;
 		CurrentCell = Cell;
 		
-		if (CurrentLevelGrid->CanPlaceBomb(CurrentCell))
+		if (CurrentLevelGrid->IsCellWalkable(CurrentCell))
 		{
 			ExplodeTimer = ExplodeDelay;
 			bPlacedInWorld = true;
