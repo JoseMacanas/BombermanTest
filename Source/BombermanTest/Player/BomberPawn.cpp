@@ -36,10 +36,10 @@ void ABomberPawn::BeginPlay()
 		}
 	}
 
-	if (LevelGrid)
+	if (CurrentLevelGrid)
 	{
-		FVector2D StartingLocation2D = LevelGrid->GetWorldCoordinatesFromCell(StartingCell);
-		FVector StartingLocation = FVector(StartingLocation2D.X, StartingLocation2D.Y, LevelGrid->GetActorLocation().Z);
+		FVector2D StartingLocation2D = CurrentLevelGrid->GetWorldCoordinatesFromCell(StartingCell);
+		FVector StartingLocation = FVector(StartingLocation2D.X, StartingLocation2D.Y, CurrentLevelGrid->GetActorLocation().Z);
 		SetActorLocation(StartingLocation);
 		CurrentCell = StartingCell;
 	}
@@ -57,24 +57,24 @@ void ABomberPawn::Tick(float DeltaTime)
 		FVector2D CurrentActorLocation2D = FVector2D(CurrentActorLocation.X, CurrentActorLocation.Y);
 		FVector DeltaMovement = CurrentVelocity * DeltaTime;
 
-		if (LevelGrid)
+		if (CurrentLevelGrid)
 		{
-			FVector2D CurrentCellWorldLocation = LevelGrid->GetWorldCoordinatesFromCell(CurrentCell);
+			FVector2D CurrentCellWorldLocation = CurrentLevelGrid->GetWorldCoordinatesFromCell(CurrentCell);
 			FVector2D CellOffset = CurrentCellWorldLocation - CurrentActorLocation2D;
 
-			FVector2D NextHorizontalLocation = CurrentActorLocation2D + FVector2D((FMath::Sign(DeltaMovement.X)*LevelGrid->CellSize*0.5f + DeltaMovement.X), 0);
-			FVector2D NextVerticalLocation = CurrentActorLocation2D + FVector2D(0,(FMath::Sign(DeltaMovement.Y)*LevelGrid->CellSize*0.5f + DeltaMovement.Y));
+			FVector2D NextHorizontalLocation = CurrentActorLocation2D + FVector2D((FMath::Sign(DeltaMovement.X)*CurrentLevelGrid->CellSize*0.5f + DeltaMovement.X), 0);
+			FVector2D NextVerticalLocation = CurrentActorLocation2D + FVector2D(0,(FMath::Sign(DeltaMovement.Y)*CurrentLevelGrid->CellSize*0.5f + DeltaMovement.Y));
 
-			FIntPoint NextHorizontalCell = LevelGrid->GetCellFromWorldCoordinates(NextHorizontalLocation);
-			FIntPoint NextVerticalCell = LevelGrid->GetCellFromWorldCoordinates(NextVerticalLocation);
+			FIntPoint NextHorizontalCell = CurrentLevelGrid->GetCellFromWorldCoordinates(NextHorizontalLocation);
+			FIntPoint NextVerticalCell = CurrentLevelGrid->GetCellFromWorldCoordinates(NextVerticalLocation);
 
 
 			// Prevent moving into a Bomb or into a wall, but allow moving around on top of a Bomb that was just placed
-			if (NextHorizontalCell != CurrentCell && !LevelGrid->IsCellWalkable(NextHorizontalCell))
+			if (NextHorizontalCell != CurrentCell && !CurrentLevelGrid->IsCellWalkable(NextHorizontalCell))
 			{
 				DeltaMovement.X = 0;
 			}
-			if (NextVerticalCell != CurrentCell && !LevelGrid->IsCellWalkable(NextVerticalCell))
+			if (NextVerticalCell != CurrentCell && !CurrentLevelGrid->IsCellWalkable(NextVerticalCell))
 			{
 				DeltaMovement.Y = 0;
 			}
@@ -102,10 +102,10 @@ void ABomberPawn::Tick(float DeltaTime)
 			SetActorLocation(NewLocation);
 
 			FVector2D NewLocation2D = FVector2D(NewLocation.X, NewLocation.Y);
-			FIntPoint NewCell = LevelGrid->GetCellFromWorldCoordinates(NewLocation2D);
+			FIntPoint NewCell = CurrentLevelGrid->GetCellFromWorldCoordinates(NewLocation2D);
 			if (NewCell != CurrentCell)
 			{
-				LevelGrid->ChangeCell(this, CurrentCell, NewCell);
+				CurrentLevelGrid->ChangeCell(this, CurrentCell, NewCell);
 				CurrentCell = NewCell;
 
 			}
@@ -154,10 +154,10 @@ void ABomberPawn::PlaceBomb()
 	{
 		FVector ActorLocation = GetActorLocation();
 		FVector2D ActorLocation2D = FVector2D(ActorLocation.X, ActorLocation.Y);
-		if (LevelGrid)
+		if (CurrentLevelGrid)
 		{
-			FIntPoint CurrentCell = LevelGrid->GetCellFromWorldCoordinates(ActorLocation2D);
-			if (AvailableBomb->PlaceInWorld(LevelGrid, CurrentCell))
+			FIntPoint CurrentCell = CurrentLevelGrid->GetCellFromWorldCoordinates(ActorLocation2D);
+			if (AvailableBomb->PlaceInWorld(CurrentLevelGrid, CurrentCell))
 			{
 				if (GEngine)
 				{
@@ -171,6 +171,10 @@ void ABomberPawn::PlaceBomb()
 
 bool ABomberPawn::OnDamaged()
 {
-	// TODO: Die
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Dead player at %d - %d!"), CurrentCell.X, CurrentCell.Y));
+	}
+
 	return true;
 }

@@ -32,7 +32,7 @@ public:
 
 	bool PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell);
 
-	void Explode();	
+	void Explode();
 
 	bool bPlacedInWorld = false;
 	
@@ -40,6 +40,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ExplodeDelay = 3.0f;
+
+	UPROPERTY()
+	int ExplosionSize = 3;
 
 	UPROPERTY()
 	ALevelGrid* CurrentLevelGrid;

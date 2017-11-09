@@ -40,6 +40,7 @@ public:
 	FIntPoint GetCellFromWorldCoordinates(FVector2D WorldCoordinates) const;
 	FVector2D GetWorldCoordinatesFromCell(FIntPoint Cell) const;
 	bool IsCellWalkable(FIntPoint Cell) const;
+	void SpawnExplosion(FIntPoint Cell, int Size);
 
 	
 	UPROPERTY(EditInstanceOnly)
@@ -61,4 +62,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	UClass* BreakableBlockBPClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	UClass* ExplosionBPClass;
 };

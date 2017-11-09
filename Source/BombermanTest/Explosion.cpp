@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Explosion.h"
-
+#include "LevelGrid.h"
 
 // Sets default values
 AExplosion::AExplosion()
@@ -15,7 +15,8 @@ AExplosion::AExplosion()
 void AExplosion::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	TimeToLive = ExplosionDuration;	
 }
 
 // Called every frame
@@ -23,5 +24,34 @@ void AExplosion::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!bExistsInGrid)
+	{
+		bExistsInGrid = true;
+		if (CurrentLevelGrid)
+		{
+			CurrentLevelGrid->EnterCell(this, CurrentCell);
+		}
+	}
+
+	TimeToLive -= DeltaTime;
+
+	if (TimeToLive <= 0)
+	{
+		RemoveFromGame();
+	}
 }
 
+void AExplosion::RemoveFromGame()
+{
+	if (CurrentLevelGrid)
+	{
+		CurrentLevelGrid->ExitCell(this, CurrentCell);
+	}
+
+	Destroy();
+}
+
+bool AExplosion::OnDamaged()
+{
+	return false;
+}

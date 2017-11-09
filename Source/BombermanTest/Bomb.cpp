@@ -68,31 +68,24 @@ void ABomb::Explode()
 	if (CurrentLevelGrid)
 	{
 		CurrentLevelGrid->ExitCell(this, CurrentCell);
+		CurrentLevelGrid->SpawnExplosion(CurrentCell, ExplosionSize);
 	}
 
 	bPlacedInWorld = false;
 	SetActorHiddenInGame(true);
 	SetActorTickEnabled(false);
 	SetActorEnableCollision(false);
-
-
+	
 	CurrentLevelGrid = NULL;
 }
 
 
 bool ABomb::OnDamaged()
 {
-	if (CurrentLevelGrid)
+	if (bPlacedInWorld)
 	{
-
+		Explode();
+		return true;
 	}
-
-	bPlacedInWorld = false;
-	SetActorHiddenInGame(true);
-	SetActorTickEnabled(false);
-	SetActorEnableCollision(false);
-
-
-	CurrentLevelGrid = NULL;
-	return true;
+	return false;
 }

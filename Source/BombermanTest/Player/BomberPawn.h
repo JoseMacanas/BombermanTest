@@ -57,8 +57,7 @@ public:
 	TArray<ABomb*> BombPool;
 	
 	UPROPERTY(EditInstanceOnly)
-	ALevelGrid* LevelGrid;
-
+	ALevelGrid* CurrentLevelGrid;
 
 	UPROPERTY()
 	FIntPoint CurrentCell;

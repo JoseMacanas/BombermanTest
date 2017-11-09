@@ -4,7 +4,9 @@
 #include "CellOccupantInterface.h"
 #include "Block.h"
 #include "Bomb.h"
+#include "Explosion.h"
 #include "Runtime/Engine/Classes/Engine/World.h"
+#include "Engine.h"
 
 
 // Sets default values
@@ -78,6 +80,24 @@ void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell
 	{
 		CellSet.Add(CellOccuppant);
 	}
+
+	bool bICellOnFire = false;
+	for (auto& Elem : CellSet)
+	{
+		if (Cast<AExplosion>(Elem))
+		{
+			bICellOnFire = true;
+			break;
+		}
+	}
+
+	if (bICellOnFire)
+	{
+		for (auto& Elem : CellSet)
+		{
+			Elem->OnDamaged();
+		}
+	}
 }
 
 void ALevelGrid::ExitCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell)
@@ -144,4 +164,46 @@ bool ALevelGrid::IsCellWalkable(FIntPoint Cell) const
 	}
 
 	return true;
+}
+
+void ALevelGrid::SpawnExplosion(FIntPoint Cell, int ExplosionSize)
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("EXPLOSION at %d - %d!"), Cell.X, Cell.Y));
+	}
+
+	if (ExplosionBPClass)
+	{
+		UWorld* const World = GetWorld();
+	
+		TArray<FIntPoint> ExplosionDirections;
+		ExplosionDirections.Add(FIntPoint(0, 1)); // North
+		ExplosionDirections.Add(FIntPoint(0, -1)); // South
+		ExplosionDirections.Add(FIntPoint(1, 0)); // West
+		ExplosionDirections.Add(FIntPoint(-1, 0)); // East
+
+		FActorSpawnParameters SpawnParams;
+		FVector2D AffectedCellWorldLocation = GetWorldCoordinatesFromCell(Cell);
+		AExplosion* Explosion = World->SpawnActor<AExplosion>(ExplosionBPClass, FVector(AffectedCellWorldLocation.X, AffectedCellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+		Explosion->CurrentLevelGrid = this;
+		Explosion->CurrentCell = Cell;
+
+		for (int ExplosionRadiusIndex = 1; ExplosionRadiusIndex < ExplosionSize; ++ExplosionRadiusIndex)
+		{
+			for (int DirectionIndex = ExplosionDirections.Num() -1; DirectionIndex >= 0; --DirectionIndex)
+			{
+				FIntPoint NextAffectedCell = Cell + (ExplosionDirections[DirectionIndex] * ExplosionRadiusIndex);
+				FVector2D NextAffectedCellWorldLocation = GetWorldCoordinatesFromCell(NextAffectedCell);
+				AExplosion* Explosion = World->SpawnActor<AExplosion>(ExplosionBPClass, FVector(NextAffectedCellWorldLocation.X, NextAffectedCellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+				Explosion->CurrentLevelGrid = this;
+				Explosion->CurrentCell = NextAffectedCell;
+
+				if (!IsCellWalkable(NextAffectedCell))
+				{
+					ExplosionDirections.RemoveAt(DirectionIndex);
+				}
+			}
+		}
+	}
 }
