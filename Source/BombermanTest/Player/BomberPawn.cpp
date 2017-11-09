@@ -42,6 +42,7 @@ void ABomberPawn::BeginPlay()
 		FVector StartingLocation = FVector(StartingLocation2D.X, StartingLocation2D.Y, CurrentLevelGrid->GetActorLocation().Z);
 		SetActorLocation(StartingLocation);
 		CurrentCell = StartingCell;
+		CurrentLevelGrid->EnterCell(this, CurrentCell);
 	}
 }
 
