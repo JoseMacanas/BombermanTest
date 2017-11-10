@@ -35,12 +35,18 @@ bool ABlock::OnDamaged()
 		}
 		return false;
 	}
-
-
+	
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("A Block was destroyed!"));
 	}
+	RemoveFromGame();
+	return true;
+}
+
+bool ABlock::RemoveFromGame()
+{
+	Destroy();
 	return true;
 }
 

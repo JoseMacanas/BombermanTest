@@ -31,9 +31,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual bool OnDamaged() override;
-
-	void RemoveFromGame();
-
+	virtual bool RemoveFromGame() override;
+	
 	float TimeToLive;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

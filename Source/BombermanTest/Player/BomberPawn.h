@@ -26,19 +26,25 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	virtual bool OnDamaged() override;
+	virtual bool RemoveFromGame() override;
+
+	void Move(float DeltaTime);
+
+	void PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell);
+
+	void Reset();
 	
 	void MoveXAxis(float AxisValue);
 	void MoveYAxis(float AxisValue);
 	void PlaceBomb();
 
-	bool bIsAlive = true;
-
-
+	bool bIsAlive = false;
+	
 	FVector CurrentVelocity;
 
 	UPROPERTY(EditInstanceOnly)
@@ -46,9 +52,6 @@ public:
 
 	UPROPERTY(EditInstanceOnly)
 	int PlayerId = 0;
-
-	UPROPERTY(EditInstanceOnly)
-	FIntPoint StartingCell = FIntPoint(0,0);
 
 	UPROPERTY(EditDefaultsOnly)
 	UClass* BombBPClass;
@@ -59,7 +62,7 @@ public:
 	UPROPERTY()
 	TArray<ABomb*> BombPool;
 	
-	UPROPERTY(EditInstanceOnly)
+	UPROPERTY()
 	ALevelGrid* CurrentLevelGrid;
 
 	UPROPERTY()

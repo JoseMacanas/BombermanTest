@@ -25,6 +25,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual bool OnDamaged() override;
+	virtual bool RemoveFromGame() override;
 
 	UPROPERTY(EditAnywhere)
 	bool bIsBreakable = false;

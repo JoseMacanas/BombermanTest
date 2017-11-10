@@ -6,6 +6,7 @@
 #include "Bomb.h"
 #include "LevelGrid.h"
 #include "Engine.h"
+#include "BombermanTestGameStateBase.h"
 
 
 // Sets default values
@@ -36,14 +37,7 @@ void ABomberPawn::BeginPlay()
 		}
 	}
 
-	if (CurrentLevelGrid)
-	{
-		FVector2D StartingLocation2D = CurrentLevelGrid->GetWorldCoordinatesFromCell(StartingCell);
-		FVector StartingLocation = FVector(StartingLocation2D.X, StartingLocation2D.Y, CurrentLevelGrid->GetActorLocation().Z);
-		SetActorLocation(StartingLocation);
-		CurrentCell = StartingCell;
-		CurrentLevelGrid->EnterCell(this, CurrentCell);
-	}
+
 }
 
 
@@ -52,6 +46,14 @@ void ABomberPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bIsAlive)
+	{
+		Move(DeltaTime);
+	}	
+}
+
+void ABomberPawn::Move(float DeltaTime)
+{
 	if (!CurrentVelocity.IsZero())
 	{
 		FVector CurrentActorLocation = GetActorLocation();
@@ -64,7 +66,7 @@ void ABomberPawn::Tick(float DeltaTime)
 			FVector2D CellOffset = CurrentCellWorldLocation - CurrentActorLocation2D;
 
 			FVector2D NextHorizontalLocation = CurrentActorLocation2D + FVector2D((FMath::Sign(DeltaMovement.X)*CurrentLevelGrid->CellSize*0.5f + DeltaMovement.X), 0);
-			FVector2D NextVerticalLocation = CurrentActorLocation2D + FVector2D(0,(FMath::Sign(DeltaMovement.Y)*CurrentLevelGrid->CellSize*0.5f + DeltaMovement.Y));
+			FVector2D NextVerticalLocation = CurrentActorLocation2D + FVector2D(0, (FMath::Sign(DeltaMovement.Y)*CurrentLevelGrid->CellSize*0.5f + DeltaMovement.Y));
 
 			FIntPoint NextHorizontalCell = CurrentLevelGrid->GetCellFromWorldCoordinates(NextHorizontalLocation);
 			FIntPoint NextVerticalCell = CurrentLevelGrid->GetCellFromWorldCoordinates(NextVerticalLocation);
@@ -98,7 +100,7 @@ void ABomberPawn::Tick(float DeltaTime)
 				DeltaMovement.X = FMath::Min(FMath::Abs(DeltaMovement.Y), FMath::Abs(CellOffset.X)) * FMath::Sign(CellOffset.X);
 				DeltaMovement.Y = 0;
 			}
-			
+
 			FVector NewLocation = CurrentActorLocation + (DeltaMovement);
 			SetActorLocation(NewLocation);
 
@@ -111,6 +113,27 @@ void ABomberPawn::Tick(float DeltaTime)
 
 			}
 		}
+	}
+}
+
+void ABomberPawn::Reset()
+{
+	bIsAlive = true;
+}
+
+void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell)
+{
+	if (LevelGrid)
+	{
+		CurrentLevelGrid = LevelGrid;
+
+		FVector2D StartingLocation2D = CurrentLevelGrid->GetWorldCoordinatesFromCell(StartingCell);
+		FVector StartingLocation = FVector(StartingLocation2D.X, StartingLocation2D.Y, CurrentLevelGrid->GetActorLocation().Z);
+		SetActorLocation(StartingLocation);
+		CurrentCell = StartingCell;
+		CurrentLevelGrid->EnterCell(this, CurrentCell);
+
+		Reset();		
 	}
 }
 
@@ -172,10 +195,34 @@ void ABomberPawn::PlaceBomb()
 
 bool ABomberPawn::OnDamaged()
 {
-	if (GEngine)
+	if (bIsAlive)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Dead player at %d - %d!"), CurrentCell.X, CurrentCell.Y));
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Dead player at %d - %d!"), CurrentCell.X, CurrentCell.Y));
+		}
+
+		bIsAlive = false;
+
+		UWorld* const World = GetWorld();
+		if (World)
+		{
+			ABombermanTestGameStateBase* GameState = World->GetGameState<ABombermanTestGameStateBase>();
+
+			if (GameState)
+			{
+				GameState->OnPlayerDeath(this);
+			}
+		}
 	}
 
 	return true;
 }
+
+
+bool ABomberPawn::RemoveFromGame()
+{
+
+	return true;
+}
+

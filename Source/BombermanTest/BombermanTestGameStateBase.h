@@ -17,4 +17,11 @@ class BOMBERMANTEST_API ABombermanTestGameStateBase : public AGameStateBase
 {
 	GENERATED_BODY()
 	ABombermanTestGameStateBase();
+
+public:
+	void OnPlayerDeath(ABomberPawn* DeadPlayer);
+
+
+	TArray<ABomberPawn*> Players;
+	TArray<int> Scores;
 };

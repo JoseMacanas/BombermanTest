@@ -41,7 +41,12 @@ void AExplosion::Tick(float DeltaTime)
 	}
 }
 
-void AExplosion::RemoveFromGame()
+bool AExplosion::OnDamaged()
+{
+	return false;
+}
+
+bool AExplosion::RemoveFromGame()
 {
 	if (CurrentLevelGrid)
 	{
@@ -49,9 +54,6 @@ void AExplosion::RemoveFromGame()
 	}
 
 	Destroy();
-}
 
-bool AExplosion::OnDamaged()
-{
-	return false;
+	return true;
 }

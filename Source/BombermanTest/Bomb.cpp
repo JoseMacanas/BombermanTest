@@ -65,18 +65,11 @@ bool ABomb::PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell)
 
 void ABomb::Explode()
 {
+	RemoveFromGame();
 	if (CurrentLevelGrid)
 	{
-		CurrentLevelGrid->ExitCell(this, CurrentCell);
 		CurrentLevelGrid->SpawnExplosion(CurrentCell, ExplosionSize);
-	}
-
-	bPlacedInWorld = false;
-	SetActorHiddenInGame(true);
-	SetActorTickEnabled(false);
-	SetActorEnableCollision(false);
-	
-	CurrentLevelGrid = NULL;
+	}	
 }
 
 
@@ -88,4 +81,19 @@ bool ABomb::OnDamaged()
 		return true;
 	}
 	return false;
+}
+
+bool ABomb::RemoveFromGame()
+{
+	if (CurrentLevelGrid)
+	{
+		CurrentLevelGrid->ExitCell(this, CurrentCell);
+	}
+
+	bPlacedInWorld = false;
+	SetActorHiddenInGame(true);
+	SetActorTickEnabled(false);
+	SetActorEnableCollision(false);
+
+	return true;
 }

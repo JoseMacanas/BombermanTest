@@ -17,4 +17,5 @@ class ICellOccupantInterface
 
 public:	
 	virtual bool OnDamaged() = 0;
+	virtual bool RemoveFromGame() = 0;
 };

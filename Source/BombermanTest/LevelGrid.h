@@ -5,8 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
-
-
+// This can't be forward declared because it needs to be exposed to the blueprint (UPROPERTY(EditInstanceOnly))
+#include "Player/BomberPawn.h"
 
 #include "LevelGrid.generated.h"
 
@@ -35,7 +35,9 @@ public:
 	void ChangeCell(ICellOccupantInterface* CellOccuppant, FIntPoint OldCell, FIntPoint NewCell);
 
 	void GenerateLevel(int RandomSeed = 0);
-
+	void PlacePlayers();
+	
+	void RestartGame();
 
 	FIntPoint GetCellFromWorldCoordinates(FVector2D WorldCoordinates) const;
 	FVector2D GetWorldCoordinatesFromCell(FIntPoint Cell) const;
@@ -65,4 +67,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	UClass* ExplosionBPClass;
+	
+	UPROPERTY(EditInstanceOnly)
+	TArray<ABomberPawn*> Players;
 };

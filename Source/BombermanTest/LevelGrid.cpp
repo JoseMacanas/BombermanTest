@@ -21,12 +21,48 @@ ALevelGrid::ALevelGrid()
 void ALevelGrid::BeginPlay()
 {
 	Super::BeginPlay();
-	
+}
+
+void ALevelGrid::RestartGame()
+{
+	for (auto CellOccupantIterator = CellOccupants.CreateConstIterator(); CellOccupantIterator; ++CellOccupantIterator)
+	{
+		TSet<ICellOccupantInterface*> CellSet = CellOccupantIterator.Value();
+
+		for (auto CellSetIterator = CellSet.CreateConstIterator(); CellSetIterator; ++CellSetIterator)
+		{
+			ICellOccupantInterface* CellOccupant = *CellSetIterator;
+			CellOccupant->RemoveFromGame();
+		}
+	}
+
 	GenerateLevel();
+
+	PlacePlayers();
 }
 
 
-// Called every frame
+void ALevelGrid::PlacePlayers()
+{
+	// The grid real valid positions go from (1,1) to (GridWidth, GridHeight), to take into account the borders of the grid
+	// Place up to four players in the corners.
+	TArray<FIntPoint> StartingPositions;
+	StartingPositions.Add(FIntPoint(1, 1));
+	StartingPositions.Add(FIntPoint(GridWidth, GridHeight));
+	StartingPositions.Add(FIntPoint(1, GridHeight));
+	StartingPositions.Add(FIntPoint(GridWidth, 1));
+
+	for (int PlayerIndex = 0; PlayerIndex < Players.Num(); ++PlayerIndex)
+	{
+		ABomberPawn* Player = Players[PlayerIndex];
+		if (Player)
+		{
+			Player->PlaceInGrid(this, StartingPositions[PlayerIndex]);
+		}
+	}
+}
+
+
 void ALevelGrid::GenerateLevel(int RandomSeed)
 {
 	FRandomStream RandomNumberGenerator;
