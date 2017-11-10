@@ -36,6 +36,9 @@ public:
 	void MoveYAxis(float AxisValue);
 	void PlaceBomb();
 
+	bool bIsAlive = true;
+
+
 	FVector CurrentVelocity;
 
 	UPROPERTY(EditInstanceOnly)
@@ -61,4 +64,7 @@ public:
 
 	UPROPERTY()
 	FIntPoint CurrentCell;
+
+	UPROPERTY(EditInstanceOnly)
+	FString PlayerName;
 };
