@@ -22,7 +22,7 @@ ALevelGrid::ALevelGrid()
 // Called when the game starts or when spawned
 void ALevelGrid::BeginPlay()
 {
-	Super::BeginPlay();
+	Super::BeginPlay();	
 }
 
 void ALevelGrid::RestartGame()
@@ -38,22 +38,39 @@ void ALevelGrid::RestartGame()
 		}
 	}
 
+	SetMovementDirections();
+	SetStartingPositions();
 	GenerateLevel();
-
 	PlacePlayers();
 }
 
-
-void ALevelGrid::PlacePlayers()
+void ALevelGrid::SetStartingPositions()
 {
+	StartingPositions.Empty();
+
 	// The grid real valid positions go from (1,1) to (GridWidth, GridHeight), to take into account the borders of the grid
 	// Place up to four players in the corners.
-	TArray<FIntPoint> StartingPositions;
 	StartingPositions.Add(FIntPoint(1, 1));
 	StartingPositions.Add(FIntPoint(GridWidth, GridHeight));
 	StartingPositions.Add(FIntPoint(1, GridHeight));
 	StartingPositions.Add(FIntPoint(GridWidth, 1));
+}
 
+void ALevelGrid::SetMovementDirections()
+{
+	MovementDirections.Empty();
+	// Movement in the grid is only allowed in these four directions:
+	
+	MovementDirections.Add(FIntPoint(0, 1)); // North
+	MovementDirections.Add(FIntPoint(0, -1)); // South
+	MovementDirections.Add(FIntPoint(1, 0)); // West
+	MovementDirections.Add(FIntPoint(-1, 0)); // East
+}
+
+
+
+void ALevelGrid::PlacePlayers()
+{
 	for (int PlayerIndex = 0; PlayerIndex < Players.Num(); ++PlayerIndex)
 	{
 		ABomberPawn* Player = Players[PlayerIndex];
@@ -68,10 +85,21 @@ void ALevelGrid::PlacePlayers()
 void ALevelGrid::GenerateLevel(int RandomSeed)
 {
 	FRandomStream RandomNumberGenerator;
-	RandomNumberGenerator.Initialize(RandomSeed);
+	//RandomNumberGenerator.Initialize(RandomSeed); // DEBUG
+
+	RandomNumberGenerator.GenerateNewSeed();
+	
+	TArray<FIntPoint> ClearPositions = StartingPositions;
+	for (int StartingPositionIndex = 0; StartingPositionIndex < StartingPositions.Num(); ++StartingPositionIndex)
+	{
+		for (int MovementDirectionIndex = 0; MovementDirectionIndex < MovementDirections.Num(); ++MovementDirectionIndex)
+		{
+			ClearPositions.Add(StartingPositions[StartingPositionIndex] + MovementDirections[MovementDirectionIndex]);
+		}
+	}
 	
 	UWorld* const World = GetWorld();
-	if (World && BorderBlockBPClass && SolidBlockBPClass)
+	if (World && BorderBlockBPClass && SolidBlockBPClass && BreakableBlockBPClass)
 	{
 		for (int RowIndex = 0; RowIndex < GridHeight + 2; ++RowIndex)
 		{
@@ -84,6 +112,8 @@ void ALevelGrid::GenerateLevel(int RandomSeed)
 				{
 					FActorSpawnParameters SpawnParams;
 					ABlock* Block = World->SpawnActor<ABlock>(BorderBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+					Block->CurrentLevelGrid = this;
+					Block->CurrentCell = Cell;
 
 					EnterCell(Block, Cell);
 				}
@@ -91,8 +121,22 @@ void ALevelGrid::GenerateLevel(int RandomSeed)
 				{
 					FActorSpawnParameters SpawnParams;
 					ABlock* Block = World->SpawnActor<ABlock>(SolidBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+					Block->CurrentLevelGrid = this;
+					Block->CurrentCell = Cell;
 
 					EnterCell(Block, Cell);
+				}
+				else if (!ClearPositions.Contains(Cell))
+				{
+					if (RandomNumberGenerator.RandRange(0, 10) > 0) // Change this to change the chances of breakable blocks
+					{
+						FActorSpawnParameters SpawnParams;
+						ABlock* Block = World->SpawnActor<ABlock>(BreakableBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+						Block->CurrentLevelGrid = this;
+						Block->CurrentCell = Cell;
+
+						EnterCell(Block, Cell);
+					}
 				}
 			}
 		}
@@ -252,12 +296,7 @@ void ALevelGrid::SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArr
 
 	if (ExplosionBPClass)
 	{
-		TArray<FIntPoint> ExplosionDirections;
-		ExplosionDirections.Add(FIntPoint(0, 1)); // North
-		ExplosionDirections.Add(FIntPoint(0, -1)); // South
-		ExplosionDirections.Add(FIntPoint(1, 0)); // West
-		ExplosionDirections.Add(FIntPoint(-1, 0)); // East
-
+		TArray<FIntPoint> ExplosionDirections = MovementDirections;
 		FActorSpawnParameters SpawnParams;
 
 		bool bExplosionGoesThrough = SpawnExplosionFire(GetWorld(), SpawnParams, Cell, AffectedBombs, AffectedPlayers);

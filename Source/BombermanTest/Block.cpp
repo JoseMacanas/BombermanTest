@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Block.h"
-
+#include "LevelGrid.h"
 #include "Engine.h"
 
 // Sets default values
@@ -29,23 +29,20 @@ bool ABlock::OnDamaged()
 {
 	if (!bIsBreakable)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("A Block was damaged but it is unbreakable"));
-		}
 		return false;
 	}
 	
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("A Block was destroyed!"));
-	}
 	RemoveFromGame();
 	return true;
 }
 
 bool ABlock::RemoveFromGame()
 {
+	if (CurrentLevelGrid)
+	{
+		CurrentLevelGrid->ExitCell(this, CurrentCell);
+	}
+
 	Destroy();
 	return true;
 }

@@ -51,6 +51,9 @@ public:
 
 	// Returns true if the fire goes through (it isn't blocked), and false if the explosion fire is blocked at this location
 	bool SpawnExplosionFire(UWorld* const World, FActorSpawnParameters SpawnParams, FIntPoint Cell, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers);
+
+	void SetStartingPositions();
+	void SetMovementDirections();
 	
 	UPROPERTY(EditInstanceOnly)
 	float CellSize = 100;
@@ -77,4 +80,7 @@ public:
 	
 	UPROPERTY(EditInstanceOnly)
 	TArray<ABomberPawn*> Players;
+
+	TArray<FIntPoint> StartingPositions;
+	TArray<FIntPoint> MovementDirections;
 };

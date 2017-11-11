@@ -7,6 +7,8 @@
 #include "CellOccupantInterface.h"
 #include "Block.generated.h"
 
+class ALevelGrid;
+
 UCLASS()
 class BOMBERMANTEST_API ABlock : public AActor, public ICellOccupantInterface
 {
@@ -30,4 +32,10 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	bool bIsBreakable = false;
+
+	UPROPERTY()
+	ALevelGrid* CurrentLevelGrid;
+
+	UPROPERTY()
+	FIntPoint CurrentCell;
 };
