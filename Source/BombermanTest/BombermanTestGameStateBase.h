@@ -4,9 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
-
-class ABomberPawn;
-
 #include "BombermanTestGameStateBase.generated.h"
 
 /**
@@ -19,9 +16,11 @@ class BOMBERMANTEST_API ABombermanTestGameStateBase : public AGameStateBase
 	ABombermanTestGameStateBase();
 
 public:
-	void OnPlayerDeath(ABomberPawn* DeadPlayer);
-
-
-	TArray<ABomberPawn*> Players;
+	void OnPlayerDeath(const TArray<int>& DeadPlayers);
+	bool IsGameOver();
+	void NewRound(int NumberOfPlayers);
+	void AddScores();
+	
+	TArray<int> LivingPlayers;
 	TArray<int> Scores;
 };

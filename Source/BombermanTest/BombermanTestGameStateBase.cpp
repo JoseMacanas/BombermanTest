@@ -3,7 +3,6 @@
 #include "BombermanTestGameStateBase.h"
 #include "BombermanTestGameModeBase.h"
 
-#include "Player/BomberPawn.h"
 #include "Engine.h"
 
 
@@ -17,24 +16,62 @@ ABombermanTestGameStateBase::ABombermanTestGameStateBase()
 	}	
 }
 
-
-void ABombermanTestGameStateBase::OnPlayerDeath(ABomberPawn* DeadPlayer)
+bool ABombermanTestGameStateBase::IsGameOver()
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("PlayerDeathDetected on GameState"));
-	}
-	
-	UWorld* const World = GetWorld();
-	if (World)
-	{
-		ABombermanTestGameModeBase* GameMode = Cast<ABombermanTestGameModeBase>(World->GetAuthGameMode());
+	bool IsRoundOver = (LivingPlayers.Num() <= 1);
+	return false;
+}
 
-		if (GameMode)
+void ABombermanTestGameStateBase::NewRound(int NumberOfPlayers)
+{
+	LivingPlayers.Empty();
+
+	for (int PlayerIndex = 0; PlayerIndex < NumberOfPlayers; ++PlayerIndex)
+	{
+		LivingPlayers.Add(PlayerIndex);
+		if (Scores.Num() < PlayerIndex)
 		{
-			GameMode->OnGameEnd();
+			Scores.Add(0);
+		}
+	}	
+}
+
+void ABombermanTestGameStateBase::OnPlayerDeath(const TArray<int>& DeadPlayers)
+{
+	for (int PlayerIterator = 0; PlayerIterator < DeadPlayers.Num(); ++PlayerIterator)
+	{
+		int DeadPlayerId = DeadPlayers[PlayerIterator];
+		if (LivingPlayers.Contains(DeadPlayerId))
+		{
+			LivingPlayers.Remove(DeadPlayerId);
 		}
 	}
 
+	if (LivingPlayers.Num() < 2)
+	{
+		UWorld* const World = GetWorld();
+		if (World)
+		{					
+			ABombermanTestGameModeBase* GameMode = World->GetAuthGameMode<ABombermanTestGameModeBase>();
+
+			if (GameMode)
+			{
+				GameMode->AddScoresAndEndGame();
+			}
+		}
+	}
+}
+
+
+void ABombermanTestGameStateBase::AddScores()
+{
+	for (int LivingPlayerIndex = 0; LivingPlayerIndex < LivingPlayers.Num(); ++LivingPlayerIndex)
+	{
+		int PlayerIndex = LivingPlayers[LivingPlayerIndex];
+		if (Scores.Num() > PlayerIndex)
+		{
+			Scores[PlayerIndex] ++;
+		}
+	}
 }
 

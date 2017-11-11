@@ -11,7 +11,8 @@
 #include "LevelGrid.generated.h"
 
 class ICellOccupantInterface;
-
+class ABomb;
+class ABomberPawn;
 
 UCLASS()
 class BOMBERMANTEST_API ALevelGrid : public AActor
@@ -39,11 +40,14 @@ public:
 	
 	void RestartGame();
 
+	TArray<FString> GetPlayerNames();
+
 	FIntPoint GetCellFromWorldCoordinates(FVector2D WorldCoordinates) const;
 	FVector2D GetWorldCoordinatesFromCell(FIntPoint Cell) const;
 	bool IsCellWalkable(FIntPoint Cell) const;
-	void SpawnExplosion(FIntPoint Cell, int Size);
 
+	void SpawnChainReaction(ABomb* Bomb);
+	void SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers);
 	
 	UPROPERTY(EditInstanceOnly)
 	float CellSize = 100;

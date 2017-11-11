@@ -121,11 +121,13 @@ void ABomberPawn::Reset()
 	bIsAlive = true;
 }
 
-void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell)
+void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int PlayerIndex)
 {
 	if (LevelGrid)
 	{
 		CurrentLevelGrid = LevelGrid;
+
+		PlayerId = PlayerIndex;
 
 		FVector2D StartingLocation2D = CurrentLevelGrid->GetWorldCoordinatesFromCell(StartingCell);
 		FVector StartingLocation = FVector(StartingLocation2D.X, StartingLocation2D.Y, CurrentLevelGrid->GetActorLocation().Z);
@@ -203,17 +205,6 @@ bool ABomberPawn::OnDamaged()
 		}
 
 		bIsAlive = false;
-
-		UWorld* const World = GetWorld();
-		if (World)
-		{
-			ABombermanTestGameStateBase* GameState = World->GetGameState<ABombermanTestGameStateBase>();
-
-			if (GameState)
-			{
-				GameState->OnPlayerDeath(this);
-			}
-		}
 	}
 
 	return true;

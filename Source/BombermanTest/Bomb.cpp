@@ -64,11 +64,10 @@ bool ABomb::PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell)
 }
 
 void ABomb::Explode()
-{
-	RemoveFromGame();
+{	
 	if (CurrentLevelGrid)
 	{
-		CurrentLevelGrid->SpawnExplosion(CurrentCell, ExplosionSize);
+		CurrentLevelGrid->SpawnChainReaction(this);
 	}	
 }
 

@@ -5,8 +5,10 @@
 #include "Block.h"
 #include "Bomb.h"
 #include "Explosion.h"
+#include "Player/BomberPawn.h"
 #include "Runtime/Engine/Classes/Engine/World.h"
 #include "Engine.h"
+#include "BombermanTestGameStateBase.h"
 
 
 // Sets default values
@@ -57,7 +59,7 @@ void ALevelGrid::PlacePlayers()
 		ABomberPawn* Player = Players[PlayerIndex];
 		if (Player)
 		{
-			Player->PlaceInGrid(this, StartingPositions[PlayerIndex]);
+			Player->PlaceInGrid(this, StartingPositions[PlayerIndex], PlayerIndex);
 		}
 	}
 }
@@ -202,12 +204,47 @@ bool ALevelGrid::IsCellWalkable(FIntPoint Cell) const
 	return true;
 }
 
-void ALevelGrid::SpawnExplosion(FIntPoint Cell, int ExplosionSize)
+
+void ALevelGrid::SpawnChainReaction(ABomb* Bomb)
 {
-	if (GEngine)
+	TArray<ABomb*> AffectedBombs;
+	TArray<int> AffectedPlayers;
+
+	AffectedBombs.Add(Bomb);
+	while (AffectedBombs.Num() > 0)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("EXPLOSION at %d - %d!"), Cell.X, Cell.Y));
+		ABomb* CurrentBomb = AffectedBombs[AffectedBombs.Num() - 1];
+		AffectedBombs.Remove(CurrentBomb);
+		if (CurrentBomb)
+		{
+			SpawnExplosion(CurrentBomb, AffectedBombs, AffectedPlayers);
+		}
 	}
+
+	if (AffectedPlayers.Num() > 0)
+	{
+		UWorld* const World = GetWorld();
+		if (World)
+		{
+			ABombermanTestGameStateBase* GameState = World->GetGameState<ABombermanTestGameStateBase>();
+
+			if (GameState)
+			{
+				GameState->OnPlayerDeath(AffectedPlayers);
+			}
+		}
+	}
+}
+
+void ALevelGrid::SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers)
+{
+	if (!Bomb)
+	{
+		return;
+	}
+	FIntPoint Cell = Bomb->CurrentCell;
+	int ExplosionSize = Bomb->ExplosionSize;
+	Bomb->RemoveFromGame();
 
 	if (ExplosionBPClass)
 	{
@@ -233,13 +270,54 @@ void ALevelGrid::SpawnExplosion(FIntPoint Cell, int ExplosionSize)
 				FVector2D NextAffectedCellWorldLocation = GetWorldCoordinatesFromCell(NextAffectedCell);
 				AExplosion* Explosion = World->SpawnActor<AExplosion>(ExplosionBPClass, FVector(NextAffectedCellWorldLocation.X, NextAffectedCellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
 				Explosion->CurrentLevelGrid = this;
-				Explosion->CurrentCell = NextAffectedCell;
+				Explosion->CurrentCell = NextAffectedCell;								
 
-				if (!IsCellWalkable(NextAffectedCell))
+				if (CellOccupants.Contains(NextAffectedCell))
 				{
-					ExplosionDirections.RemoveAt(DirectionIndex);
-				}
+					TSet<ICellOccupantInterface*> CellSet = CellOccupants[NextAffectedCell];
+
+					bool bExplosionBlocked = false;
+					for (auto& Elem : CellSet)
+					{
+						ABomb* CellBomb = Cast<ABomb>(Elem);
+						ABomberPawn* CellPlayer = Cast<ABomberPawn>(Elem);
+						ABlock* CellBlock = Cast<ABlock>(Elem);
+						if (CellBomb)
+						{
+							AffectedBombs.Add(CellBomb);
+						}
+						else if (CellPlayer)
+						{
+							CellPlayer->OnDamaged();
+							AffectedPlayers.Add(CellPlayer->PlayerId);
+						}
+						else if (CellBlock)
+						{
+							bExplosionBlocked = true;							
+						}
+					}
+					if (bExplosionBlocked)
+					{
+						ExplosionDirections.RemoveAt(DirectionIndex);
+					}
+				}	
 			}
 		}
 	}
+}
+
+TArray<FString> ALevelGrid::GetPlayerNames()
+{
+	TArray<FString> PlayerNames;
+
+	for (int PlayerIndex = 0; PlayerIndex < Players.Num(); ++PlayerIndex)
+	{
+		ABomberPawn* Player = Players[PlayerIndex];
+		if (Player)
+		{
+			PlayerNames.Add(Player->PlayerName);
+		}
+	}
+
+	return PlayerNames;
 }

@@ -4,10 +4,12 @@
 #include "Engine.h"
 #include "LevelGrid.h"
 
+#include "BombermanTestGameStateBase.h"
+
 // Sets default values
 ABombermanTestGameModeBase::ABombermanTestGameModeBase()
 {
-	PrimaryActorTick.bCanEverTick = true;	
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 
@@ -16,12 +18,35 @@ void ABombermanTestGameModeBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//OnGameEnd();
-	//if (GEngine)
-	//{
-	//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GameMode TICK"));
-	//}
+	if (CurrentGameState)
+	{
+		if (RoundTimer > 0)
+		{
+			RoundTimer -= DeltaTime;
+		}
+		if (RoundTimer <= 0)
+		{
+			AddScoresAndEndGame();
+		}
+	}
 }
+
+void ABombermanTestGameModeBase::AddScoresAndEndGame()
+{
+	TArray<int> RoundWinners;
+	TArray<int> Scores;
+
+	if (CurrentGameState)
+	{
+		CurrentGameState->AddScores();
+		RoundWinners = CurrentGameState->LivingPlayers;
+		Scores = CurrentGameState->Scores;
+	}
+
+	OnGameEnd(PlayerNames, Scores, RoundWinners);
+}
+
+
 
 bool ABombermanTestGameModeBase::OnGameRestart()
 {
@@ -29,20 +54,16 @@ bool ABombermanTestGameModeBase::OnGameRestart()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GameRestart"));
 	}
-	
-	UWorld* const World = GetWorld();
-	if (World)
-	{
-		TArray<AActor*> FoundActors;
-		UGameplayStatics::GetAllActorsOfClass(World, ALevelGrid::StaticClass(), FoundActors);
 
-		if (FoundActors.Num() > 0)
+	RoundTimer = RoundTimeSeconds * 1000;
+	if (CurrentLevelGrid)
+	{
+		CurrentLevelGrid->RestartGame();
+
+		if (CurrentGameState)
 		{
-			ALevelGrid* LevelGrid = Cast<ALevelGrid>(FoundActors[0]);
-			if (LevelGrid)
-			{
-				LevelGrid->RestartGame();
-			}
+			PlayerNames = CurrentLevelGrid->GetPlayerNames();
+			CurrentGameState->NewRound(PlayerNames.Num());
 		}
 	}
 
@@ -55,6 +76,20 @@ void ABombermanTestGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UWorld* const World = GetWorld();
+	if (World)
+	{
+		CurrentGameState = World->GetGameState<ABombermanTestGameStateBase>();
+
+		TArray<AActor*> FoundActors;
+		UGameplayStatics::GetAllActorsOfClass(World, ALevelGrid::StaticClass(), FoundActors);
+
+		if (FoundActors.Num() > 0)
+		{
+			CurrentLevelGrid = Cast<ALevelGrid>(FoundActors[0]);
+		}
+	}
+		
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GameModeBeginPlay"));

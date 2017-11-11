@@ -6,6 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 
 class ABomberPawn;
+class ABombermanTestGameStateBase;
+class ALevelGrid;
 
 #include "BombermanTestGameModeBase.generated.h"
 
@@ -27,11 +29,20 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintImplementableEvent)
-	bool OnGameEnd();
+	bool OnGameEnd(const TArray<FString>& PlayerNames, const TArray<int>& Scores, const TArray<int>& RoundWinners);
+
+	void AddScoresAndEndGame();
 
 	UFUNCTION(BlueprintCallable)
 	bool OnGameRestart();
 
-	UPROPERTY()
-	TArray<ABomberPawn*> Players;
+	ABombermanTestGameStateBase* CurrentGameState;
+	ALevelGrid* CurrentLevelGrid;
+
+	UPROPERTY(EditAnywhere)
+	int RoundTimeSeconds = 600;
+
+	float RoundTimer = 0;
+
+	TArray<FString> PlayerNames;
 };

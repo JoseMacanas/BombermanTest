@@ -35,7 +35,7 @@ public:
 
 	void Move(float DeltaTime);
 
-	void PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell);
+	void PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int PlayerIndex);
 
 	void Reset();
 	
@@ -50,7 +50,7 @@ public:
 	UPROPERTY(EditInstanceOnly)
 	float CurrentSpeed = 0;
 
-	UPROPERTY(EditInstanceOnly)
+	UPROPERTY()
 	int PlayerId = 0;
 
 	UPROPERTY(EditDefaultsOnly)
