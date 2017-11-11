@@ -29,7 +29,7 @@ void ABombermanTestGameStateBase::NewRound(int NumberOfPlayers)
 	for (int PlayerIndex = 0; PlayerIndex < NumberOfPlayers; ++PlayerIndex)
 	{
 		LivingPlayers.Add(PlayerIndex);
-		if (Scores.Num() < PlayerIndex)
+		if (Scores.Num() <= PlayerIndex)
 		{
 			Scores.Add(0);
 		}

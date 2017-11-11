@@ -50,3 +50,8 @@ bool ABlock::RemoveFromGame()
 	return true;
 }
 
+
+bool ABlock::IsWalkable() const
+{
+	return false;
+}

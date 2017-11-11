@@ -191,12 +191,16 @@ bool ALevelGrid::IsCellWalkable(FIntPoint Cell) const
 	if (CellOccupants.Contains(Cell))
 	{
 		TSet<ICellOccupantInterface*> CellSet = CellOccupants[Cell];
-
-		for (auto& Elem : CellSet)
+		
+		for (auto CellSetIterator = CellSet.CreateConstIterator(); CellSetIterator; ++CellSetIterator)
 		{
-			if (Cast<ABomb>(Elem) || Cast<ABlock>(Elem))
+			const ICellOccupantInterface* CellOccupant = *CellSetIterator;
+			if (CellOccupant)
 			{
-				return false;
+				if (!CellOccupant->IsWalkable())
+				{
+					return false;
+				}
 			}
 		}
 	}
@@ -248,8 +252,6 @@ void ALevelGrid::SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArr
 
 	if (ExplosionBPClass)
 	{
-		UWorld* const World = GetWorld();
-	
 		TArray<FIntPoint> ExplosionDirections;
 		ExplosionDirections.Add(FIntPoint(0, 1)); // North
 		ExplosionDirections.Add(FIntPoint(0, -1)); // South
@@ -257,53 +259,62 @@ void ALevelGrid::SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArr
 		ExplosionDirections.Add(FIntPoint(-1, 0)); // East
 
 		FActorSpawnParameters SpawnParams;
-		FVector2D AffectedCellWorldLocation = GetWorldCoordinatesFromCell(Cell);
-		AExplosion* Explosion = World->SpawnActor<AExplosion>(ExplosionBPClass, FVector(AffectedCellWorldLocation.X, AffectedCellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
-		Explosion->CurrentLevelGrid = this;
-		Explosion->CurrentCell = Cell;
+
+		bool bExplosionGoesThrough = SpawnExplosionFire(GetWorld(), SpawnParams, Cell, AffectedBombs, AffectedPlayers);
 
 		for (int ExplosionRadiusIndex = 1; ExplosionRadiusIndex < ExplosionSize; ++ExplosionRadiusIndex)
 		{
 			for (int DirectionIndex = ExplosionDirections.Num() -1; DirectionIndex >= 0; --DirectionIndex)
 			{
 				FIntPoint NextAffectedCell = Cell + (ExplosionDirections[DirectionIndex] * ExplosionRadiusIndex);
-				FVector2D NextAffectedCellWorldLocation = GetWorldCoordinatesFromCell(NextAffectedCell);
-				AExplosion* Explosion = World->SpawnActor<AExplosion>(ExplosionBPClass, FVector(NextAffectedCellWorldLocation.X, NextAffectedCellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
-				Explosion->CurrentLevelGrid = this;
-				Explosion->CurrentCell = NextAffectedCell;								
+				
+				bool bExplosionGoesThrough = SpawnExplosionFire(GetWorld(), SpawnParams, NextAffectedCell, AffectedBombs, AffectedPlayers);
 
-				if (CellOccupants.Contains(NextAffectedCell))
+				if (!bExplosionGoesThrough)
 				{
-					TSet<ICellOccupantInterface*> CellSet = CellOccupants[NextAffectedCell];
-
-					bool bExplosionBlocked = false;
-					for (auto& Elem : CellSet)
-					{
-						ABomb* CellBomb = Cast<ABomb>(Elem);
-						ABomberPawn* CellPlayer = Cast<ABomberPawn>(Elem);
-						ABlock* CellBlock = Cast<ABlock>(Elem);
-						if (CellBomb)
-						{
-							AffectedBombs.Add(CellBomb);
-						}
-						else if (CellPlayer)
-						{
-							CellPlayer->OnDamaged();
-							AffectedPlayers.Add(CellPlayer->PlayerId);
-						}
-						else if (CellBlock)
-						{
-							bExplosionBlocked = true;							
-						}
-					}
-					if (bExplosionBlocked)
-					{
-						ExplosionDirections.RemoveAt(DirectionIndex);
-					}
-				}	
+					ExplosionDirections.RemoveAt(DirectionIndex);
+				}
 			}
 		}
 	}
+}
+
+bool ALevelGrid::SpawnExplosionFire(UWorld* const World, FActorSpawnParameters SpawnParams, FIntPoint Cell, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers)
+{
+	if (ExplosionBPClass && World)
+	{
+		FVector2D CellWorldLocation = GetWorldCoordinatesFromCell(Cell);
+		AExplosion* Explosion = World->SpawnActor<AExplosion>(ExplosionBPClass, FVector(CellWorldLocation.X, CellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+		Explosion->CurrentLevelGrid = this;
+		Explosion->CurrentCell = Cell;
+	}
+
+	bool bExplosionGoesThrough = true;
+	if (CellOccupants.Contains(Cell))
+	{
+		TSet<ICellOccupantInterface*> CellSet = CellOccupants[Cell];
+		
+		for (auto& Elem : CellSet)
+		{
+			ABomb* CellBomb = Cast<ABomb>(Elem);
+			ABomberPawn* CellPlayer = Cast<ABomberPawn>(Elem);
+			ABlock* CellBlock = Cast<ABlock>(Elem);
+			if (CellBomb)
+			{
+				AffectedBombs.Add(CellBomb);
+			}
+			else if (CellPlayer)
+			{
+				CellPlayer->OnDamaged();
+				AffectedPlayers.Add(CellPlayer->PlayerId);
+			}
+			else if (CellBlock)
+			{
+				bExplosionGoesThrough = false;
+			}
+		}
+	}
+	return bExplosionGoesThrough;
 }
 
 TArray<FString> ALevelGrid::GetPlayerNames()

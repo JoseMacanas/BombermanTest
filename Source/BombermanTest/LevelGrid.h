@@ -48,6 +48,9 @@ public:
 
 	void SpawnChainReaction(ABomb* Bomb);
 	void SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers);
+
+	// Returns true if the fire goes through (it isn't blocked), and false if the explosion fire is blocked at this location
+	bool SpawnExplosionFire(UWorld* const World, FActorSpawnParameters SpawnParams, FIntPoint Cell, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers);
 	
 	UPROPERTY(EditInstanceOnly)
 	float CellSize = 100;

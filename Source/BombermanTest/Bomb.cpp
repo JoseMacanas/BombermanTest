@@ -96,3 +96,8 @@ bool ABomb::RemoveFromGame()
 
 	return true;
 }
+
+bool ABomb::IsWalkable() const
+{
+	return false;
+}

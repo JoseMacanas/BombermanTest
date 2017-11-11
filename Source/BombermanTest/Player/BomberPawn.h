@@ -32,13 +32,12 @@ public:
 	
 	virtual bool OnDamaged() override;
 	virtual bool RemoveFromGame() override;
+	virtual bool IsWalkable() const override;
 
 	void Move(float DeltaTime);
 
 	void PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int PlayerIndex);
 
-	void Reset();
-	
 	void MoveXAxis(float AxisValue);
 	void MoveYAxis(float AxisValue);
 	void PlaceBomb();

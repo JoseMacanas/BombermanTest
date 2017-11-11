@@ -30,6 +30,7 @@ public:
 
 	virtual bool OnDamaged() override;
 	virtual bool RemoveFromGame() override;
+	virtual bool IsWalkable() const override;
 
 	bool PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell);
 

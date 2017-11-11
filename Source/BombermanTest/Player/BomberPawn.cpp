@@ -116,10 +116,6 @@ void ABomberPawn::Move(float DeltaTime)
 	}
 }
 
-void ABomberPawn::Reset()
-{
-	bIsAlive = true;
-}
 
 void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int PlayerIndex)
 {
@@ -135,7 +131,9 @@ void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int
 		CurrentCell = StartingCell;
 		CurrentLevelGrid->EnterCell(this, CurrentCell);
 
-		Reset();		
+		bIsAlive = true;
+		SetActorHiddenInGame(false);
+		SetActorTickEnabled(true);
 	}
 }
 
@@ -204,16 +202,29 @@ bool ABomberPawn::OnDamaged()
 			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Dead player at %d - %d!"), CurrentCell.X, CurrentCell.Y));
 		}
 
-		bIsAlive = false;
+		RemoveFromGame();
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 
 bool ABomberPawn::RemoveFromGame()
 {
+	if (CurrentLevelGrid)
+	{
+		CurrentLevelGrid->ExitCell(this, CurrentCell);
+	}
+
+	bIsAlive = false;
+	SetActorHiddenInGame(true);
+	SetActorTickEnabled(false);
 
 	return true;
 }
 
+bool ABomberPawn::IsWalkable() const
+{
+	return true;
+}

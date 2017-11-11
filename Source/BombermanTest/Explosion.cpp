@@ -57,3 +57,8 @@ bool AExplosion::RemoveFromGame()
 
 	return true;
 }
+
+bool AExplosion::IsWalkable() const
+{
+	return true;
+}
