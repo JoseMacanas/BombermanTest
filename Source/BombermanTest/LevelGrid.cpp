@@ -8,6 +8,7 @@
 #include "Player/BomberPawn.h"
 #include "Runtime/Engine/Classes/Engine/World.h"
 #include "Engine.h"
+#include "Pickups/Pickup.h"
 #include "BombermanTestGameStateBase.h"
 
 
@@ -82,9 +83,40 @@ void ALevelGrid::PlacePlayers()
 }
 
 
-void ALevelGrid::GenerateLevel(int RandomSeed)
+void ALevelGrid::SpawnRandomPickup(FIntPoint Cell)
 {
-	FRandomStream RandomNumberGenerator;
+	bool bShouldSpawnPickup = RandomNumberGenerator.RandRange(0, 9) <= 2;
+	
+	bShouldSpawnPickup = true; // DEBUG
+
+	if (bShouldSpawnPickup)
+	{
+		if (PickupBPClasses.Num() > 0)
+		{
+			int PickupIndex = RandomNumberGenerator.RandRange(0, PickupBPClasses.Num() - 1);
+
+			UClass * PickupBPClass = PickupBPClasses[PickupIndex];
+			if (PickupBPClasses[PickupIndex])
+			{
+				UWorld* const World = GetWorld();
+				if (World)
+				{
+					FActorSpawnParameters SpawnParams;
+
+					FVector2D CellWorldLocation = GetWorldCoordinatesFromCell(Cell);
+					APickup* NewPickup = World->SpawnActor<APickup>(PickupBPClass, FVector(CellWorldLocation.X, CellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+					NewPickup->CurrentLevelGrid = this;
+					NewPickup->CurrentCell = Cell;
+
+					EnterCell(NewPickup, Cell);
+				}
+			}
+		}
+	}
+}
+
+void ALevelGrid::GenerateLevel(int RandomSeed)
+{	
 	//RandomNumberGenerator.Initialize(RandomSeed); // DEBUG
 
 	RandomNumberGenerator.GenerateNewSeed();
@@ -320,14 +352,6 @@ void ALevelGrid::SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArr
 
 bool ALevelGrid::SpawnExplosionFire(UWorld* const World, FActorSpawnParameters SpawnParams, FIntPoint Cell, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers)
 {
-	if (ExplosionBPClass && World)
-	{
-		FVector2D CellWorldLocation = GetWorldCoordinatesFromCell(Cell);
-		AExplosion* Explosion = World->SpawnActor<AExplosion>(ExplosionBPClass, FVector(CellWorldLocation.X, CellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
-		Explosion->CurrentLevelGrid = this;
-		Explosion->CurrentCell = Cell;
-	}
-
 	bool bExplosionGoesThrough = true;
 	if (CellOccupants.Contains(Cell))
 	{
@@ -349,10 +373,23 @@ bool ALevelGrid::SpawnExplosionFire(UWorld* const World, FActorSpawnParameters S
 			}
 			else if (CellBlock)
 			{
+				CellBlock->OnDamaged();
 				bExplosionGoesThrough = false;
 			}
 		}
 	}
+
+	if (bExplosionGoesThrough)
+	{
+		if (ExplosionBPClass && World)
+		{
+			FVector2D CellWorldLocation = GetWorldCoordinatesFromCell(Cell);
+			AExplosion* Explosion = World->SpawnActor<AExplosion>(ExplosionBPClass, FVector(CellWorldLocation.X, CellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
+			Explosion->CurrentLevelGrid = this;
+			Explosion->CurrentCell = Cell;
+		}
+	}
+
 	return bExplosionGoesThrough;
 }
 

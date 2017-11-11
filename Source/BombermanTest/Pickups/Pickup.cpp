@@ -1,11 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Block.h"
+#include "Pickup.h"
 #include "LevelGrid.h"
-#include "Engine.h"
 
 // Sets default values
-ABlock::ABlock()
+APickup::APickup()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -13,46 +12,38 @@ ABlock::ABlock()
 }
 
 // Called when the game starts or when spawned
-void ABlock::BeginPlay()
+void APickup::BeginPlay()
 {
-	Super::BeginPlay();	
+	Super::BeginPlay();
+	
 }
 
 // Called every frame
-void ABlock::Tick(float DeltaTime)
+void APickup::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-bool ABlock::OnDamaged()
+
+bool APickup::OnDamaged()
 {
-	if (!bIsBreakable)
-	{
-		return false;
-	}
-	
-	if (CurrentLevelGrid)
-	{
-		CurrentLevelGrid->SpawnRandomPickup(CurrentCell);
-	}
 	RemoveFromGame();
 	return true;
 }
 
-bool ABlock::RemoveFromGame()
+bool APickup::RemoveFromGame()
 {
 	if (CurrentLevelGrid)
-	{		
+	{
 		CurrentLevelGrid->ExitCell(this, CurrentCell);
 	}
-
 	Destroy();
 	return true;
 }
 
 
-bool ABlock::IsWalkable() const
+bool APickup::IsWalkable() const
 {
-	return false;
+	return true;
 }
