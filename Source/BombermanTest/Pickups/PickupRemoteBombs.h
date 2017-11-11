@@ -13,8 +13,9 @@ UCLASS()
 class BOMBERMANTEST_API APickupRemoteBombs : public APickup
 {
 	GENERATED_BODY()
-	
-	
-	
-	
+		
+	virtual void ApplyEffects(ABomberPawn* Player) override;
+
+	UPROPERTY(EditDefaultsOnly)
+	float TimeIncrease = 10000.f;
 };

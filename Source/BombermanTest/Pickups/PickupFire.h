@@ -12,9 +12,7 @@
 UCLASS()
 class BOMBERMANTEST_API APickupFire : public APickup
 {
-	GENERATED_BODY()
+	GENERATED_BODY()	
 	
-	
-	
-	
+	virtual void ApplyEffects(ABomberPawn* Player) override;	
 };

@@ -20,7 +20,10 @@ ABomberPawn::ABomberPawn()
 void ABomberPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	SetActorHiddenInGame(true);
+	SetActorTickEnabled(false);
+
 	if (BombBPClass)
 	{
 		UWorld* const World = GetWorld();
@@ -32,12 +35,15 @@ void ABomberPawn::BeginPlay()
 			BombPool.SetNum(MaxBombs, false);
 			for (int bombIndex = 0; bombIndex < MaxBombs; ++bombIndex)
 			{
-				BombPool[bombIndex] = World->SpawnActor<ABomb>(BombBPClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+				ABomb* Bomb = World->SpawnActor<ABomb>(BombBPClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+				if (Bomb)
+				{
+					BombPool[bombIndex] = Bomb;
+					Bomb->OwnerPlayer = this;
+				}
 			}
 		}
 	}
-
-
 }
 
 
@@ -45,6 +51,11 @@ void ABomberPawn::BeginPlay()
 void ABomberPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (CurrentRemoteBombsTimer > 0)
+	{
+		CurrentRemoteBombsTimer -= DeltaTime;
+	}
 
 	if (bIsAlive)
 	{
@@ -117,6 +128,20 @@ void ABomberPawn::Move(float DeltaTime)
 }
 
 
+void ABomberPawn::Reset()
+{
+	bIsAlive = true;
+	SetActorHiddenInGame(false);
+	SetActorTickEnabled(true);
+
+	CurrentRemoteBombsTimer = 0.f;
+	CurrentSpeedIncreases = 0;
+	CurrentSpeed = StartingSpeed;
+	CurrentAvailableBombs = StartingBombs;
+	CurrentExplosionRange = StartingExplosionRange;
+	PlacedBombs = 0;
+}
+
 void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int PlayerIndex)
 {
 	if (LevelGrid)
@@ -131,9 +156,7 @@ void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int
 		CurrentCell = StartingCell;
 		CurrentLevelGrid->EnterCell(this, CurrentCell);
 
-		bIsAlive = true;
-		SetActorHiddenInGame(false);
-		SetActorTickEnabled(true);
+		Reset();
 	}
 }
 
@@ -158,6 +181,31 @@ void ABomberPawn::MoveYAxis(float AxisValue)
 	CurrentVelocity.Y = FMath::Clamp(AxisValue, -1.0f, 1.0f) * CurrentSpeed;
 }
 
+void ABomberPawn::ReleaseBomb()
+{
+	PlacedBombs--;
+}
+
+void ABomberPawn::IncreaseAvailableBombs(int Increase)
+{
+	CurrentAvailableBombs += Increase;
+}
+
+void ABomberPawn::IncreaseExplosionRange(int Increase)
+{
+	CurrentExplosionRange += Increase;
+}
+
+void ABomberPawn::IncreaseSpeed(float Increase)
+{
+	CurrentSpeed += Increase;
+	CurrentSpeedIncreases++;
+}
+
+void ABomberPawn::IncreaseRemoteBombsTime(float Increase)
+{
+	CurrentRemoteBombsTimer += Increase;
+}
 
 void ABomberPawn::PlaceBomb()
 {	
@@ -166,16 +214,33 @@ void ABomberPawn::PlaceBomb()
 	{
 		if (BombPool[bombIndex])
 		{
-			if (!BombPool[bombIndex]->bPlacedInWorld)
+			bool bIsPlacedInWorld = BombPool[bombIndex]->bPlacedInWorld;
+			
+			if (CurrentRemoteBombsTimer > 0 && bIsPlacedInWorld)
+			{
+				BombPool[bombIndex]->Explode();
+				return;
+			}
+			else if (!bIsPlacedInWorld)
 			{
 				AvailableBomb = BombPool[bombIndex];
-				break;
+
+				if (CurrentRemoteBombsTimer <= 0)
+				{
+					break;
+				}
 			}
 		}
 	}
 
+	if (CurrentAvailableBombs <= PlacedBombs)
+	{
+		return;
+	}
+
 	if (AvailableBomb)
 	{
+		AvailableBomb->ExplosionSize = CurrentExplosionRange;
 		FVector ActorLocation = GetActorLocation();
 		FVector2D ActorLocation2D = FVector2D(ActorLocation.X, ActorLocation.Y);
 		if (CurrentLevelGrid)
@@ -183,6 +248,7 @@ void ABomberPawn::PlaceBomb()
 			FIntPoint CurrentCell = CurrentLevelGrid->GetCellFromWorldCoordinates(ActorLocation2D);
 			if (AvailableBomb->PlaceInWorld(CurrentLevelGrid, CurrentCell))
 			{
+				PlacedBombs++;
 				if (GEngine)
 				{
 					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Bomb placed at %d - %d!"), CurrentCell.X, CurrentCell.Y));

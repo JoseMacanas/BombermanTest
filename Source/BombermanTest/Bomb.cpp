@@ -2,6 +2,7 @@
 
 #include "Bomb.h"
 #include "LevelGrid.h"
+#include "Player/BomberPawn.h"
 
 
 // Sets default values
@@ -93,6 +94,11 @@ bool ABomb::RemoveFromGame()
 	SetActorHiddenInGame(true);
 	SetActorTickEnabled(false);
 	SetActorEnableCollision(false);
+
+	if (OwnerPlayer)
+	{
+		OwnerPlayer->ReleaseBomb();
+	}
 
 	return true;
 }

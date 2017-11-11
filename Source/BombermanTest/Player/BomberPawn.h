@@ -34,6 +34,7 @@ public:
 	virtual bool RemoveFromGame() override;
 	virtual bool IsWalkable() const override;
 
+	void Reset();
 	void Move(float DeltaTime);
 
 	void PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int PlayerIndex);
@@ -41,22 +42,63 @@ public:
 	void MoveXAxis(float AxisValue);
 	void MoveYAxis(float AxisValue);
 	void PlaceBomb();
+	void ReleaseBomb();
 
+	void IncreaseAvailableBombs(int Increase);
+	void IncreaseExplosionRange(int Increase);
+	void IncreaseSpeed(float Increase);
+	void IncreaseRemoteBombsTime(float Increase);
+
+	
 	bool bIsAlive = false;
 	
 	FVector CurrentVelocity;
 
-	UPROPERTY(EditInstanceOnly)
-	float CurrentSpeed = 0;
-
 	UPROPERTY()
 	int PlayerId = 0;
 
+	//////////////////
+	UPROPERTY()
+	float CurrentRemoteBombsTimer;
+
+	UPROPERTY()
+	float CurrentSpeed;
+
+	UPROPERTY()
+	int CurrentSpeedIncreases;
+
+	UPROPERTY()
+	int CurrentAvailableBombs;
+
+	UPROPERTY()
+	int CurrentExplosionRange;
+	//////////////////
+
+	//////////////////
 	UPROPERTY(EditDefaultsOnly)
-	UClass* BombBPClass;
+	int MaxSpeedIncreases = 5;
 
 	UPROPERTY(EditDefaultsOnly)
-	int MaxBombs;
+	int MaxBombs = 10;
+
+	UPROPERTY(EditDefaultsOnly)
+	int MaxExplosionRange = 10;
+	//////////////////
+	
+	//////////////////
+	UPROPERTY(EditDefaultsOnly)
+	int StartingBombs = 1;
+
+	UPROPERTY(EditDefaultsOnly)
+	int StartingExplosionRange = 2;
+
+	UPROPERTY(EditDefaultsOnly)
+	int StartingSpeed = 200;
+	//////////////////
+
+
+	UPROPERTY()
+	int PlacedBombs;
 	
 	UPROPERTY()
 	TArray<ABomb*> BombPool;
@@ -69,4 +111,7 @@ public:
 
 	UPROPERTY(EditInstanceOnly)
 	FString PlayerName;
+
+	UPROPERTY(EditDefaultsOnly)
+	UClass* BombBPClass;
 };

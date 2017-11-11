@@ -8,6 +8,7 @@
 #include "Pickup.generated.h"
 
 class ALevelGrid;
+class ABomberPawn;
 
 UCLASS()
 class BOMBERMANTEST_API APickup : public AActor, public ICellOccupantInterface
@@ -29,6 +30,8 @@ public:
 	virtual bool OnDamaged() override;
 	virtual bool RemoveFromGame() override;
 	virtual bool IsWalkable() const override;
+	
+	virtual void ApplyEffects(ABomberPawn* Player);
 	
 	UPROPERTY()
 	ALevelGrid* CurrentLevelGrid;

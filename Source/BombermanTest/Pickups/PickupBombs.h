@@ -14,7 +14,5 @@ class BOMBERMANTEST_API APickupBombs : public APickup
 {
 	GENERATED_BODY()
 	
-	
-	
-	
+	virtual void ApplyEffects(ABomberPawn* Player) override;	
 };

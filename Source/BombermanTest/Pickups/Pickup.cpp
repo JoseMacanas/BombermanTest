@@ -2,6 +2,7 @@
 
 #include "Pickup.h"
 #include "LevelGrid.h"
+#include "Player/BomberPawn.h"
 
 // Sets default values
 APickup::APickup()
@@ -46,4 +47,9 @@ bool APickup::RemoveFromGame()
 bool APickup::IsWalkable() const
 {
 	return true;
+}
+
+void APickup::ApplyEffects(ABomberPawn* Player)
+{
+
 }

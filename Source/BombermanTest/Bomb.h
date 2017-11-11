@@ -7,6 +7,7 @@
 #include "CellOccupantInterface.h"
 
 class ALevelGrid;
+class ABomberPawn;
 
 
 #include "Bomb.generated.h"
@@ -51,4 +52,7 @@ public:
 
 	UPROPERTY()
 	FIntPoint CurrentCell;
+
+	UPROPERTY()
+	ABomberPawn* OwnerPlayer;
 };

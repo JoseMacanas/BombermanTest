@@ -2,6 +2,10 @@
 
 #include "PickupSpeed.h"
 
+#include "Player/BomberPawn.h"
 
 
-
+void APickupSpeed::ApplyEffects(ABomberPawn* Player)
+{
+	Player->IncreaseSpeed(SpeedIncrease);
+}

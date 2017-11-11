@@ -86,13 +86,12 @@ void ALevelGrid::PlacePlayers()
 void ALevelGrid::SpawnRandomPickup(FIntPoint Cell)
 {
 	bool bShouldSpawnPickup = RandomNumberGenerator.RandRange(0, 9) <= 2;
-	
-	bShouldSpawnPickup = true; // DEBUG
 
 	if (bShouldSpawnPickup)
 	{
 		if (PickupBPClasses.Num() > 0)
 		{
+			// Change the random function to make certainpickups more likely to spawn
 			int PickupIndex = RandomNumberGenerator.RandRange(0, PickupBPClasses.Num() - 1);
 
 			UClass * PickupBPClass = PickupBPClasses[PickupIndex];
@@ -195,17 +194,35 @@ void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell
 		CellSet.Add(CellOccuppant);
 	}
 
-	bool bICellOnFire = false;
-	for (auto& Elem : CellSet)
+	bool bIsCellOnFire = false;
+
+	ABomberPawn* Player = Cast<ABomberPawn>(CellOccuppant);
+	TArray<APickup*> Pickups;
+
+	for (auto CellSetIterator = CellSet.CreateIterator(); CellSetIterator; ++CellSetIterator)
 	{
-		if (Cast<AExplosion>(Elem))
+		if (Cast<AExplosion>(*CellSetIterator))
 		{
-			bICellOnFire = true;
+			bIsCellOnFire = true;
 			break;
+		}
+		else if (Cast<APickup>(*CellSetIterator))
+		{
+			Pickups.Add(Cast<APickup>(*CellSetIterator));
 		}
 	}
 
-	if (bICellOnFire)
+	if (Player)
+	{
+		for (int PickupIterator = 0; PickupIterator < Pickups.Num(); ++PickupIterator)
+		{
+			APickup* Pickup = Pickups[PickupIterator];
+			Pickup->ApplyEffects(Player);
+			Pickup->OnDamaged();
+		}
+	}
+
+	if (bIsCellOnFire)
 	{
 		for (auto& Elem : CellSet)
 		{
