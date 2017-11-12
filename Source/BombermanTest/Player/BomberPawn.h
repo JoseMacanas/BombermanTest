@@ -33,6 +33,8 @@ public:
 	virtual bool OnDamaged() override;
 	virtual bool RemoveFromGame() override;
 	virtual bool IsWalkable() const override;
+	virtual void SetCurrentCell(FIntPoint Cell) override;
+	virtual const FIntPoint GetCurrentCell() const override;
 
 	void Reset();
 	void Move(float DeltaTime);
@@ -108,6 +110,9 @@ public:
 
 	UPROPERTY()
 	FIntPoint CurrentCell;
+
+	UPROPERTY()
+	FIntPoint LastCell;
 
 	UPROPERTY(EditInstanceOnly)
 	FString PlayerName;

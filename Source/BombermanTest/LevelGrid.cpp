@@ -18,6 +18,7 @@ ALevelGrid::ALevelGrid()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	SetMovementDirections();
 }
 
 // Called when the game starts or when spawned
@@ -38,8 +39,7 @@ void ALevelGrid::RestartGame()
 			CellOccupant->RemoveFromGame();
 		}
 	}
-
-	SetMovementDirections();
+	
 	SetStartingPositions();
 	GenerateLevel();
 	PlacePlayers();
@@ -105,7 +105,7 @@ void ALevelGrid::SpawnRandomPickup(FIntPoint Cell)
 					FVector2D CellWorldLocation = GetWorldCoordinatesFromCell(Cell);
 					APickup* NewPickup = World->SpawnActor<APickup>(PickupBPClass, FVector(CellWorldLocation.X, CellWorldLocation.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
 					NewPickup->CurrentLevelGrid = this;
-					NewPickup->CurrentCell = Cell;
+					NewPickup->SetCurrentCell(Cell);
 
 					EnterCell(NewPickup, Cell);
 				}
@@ -443,3 +443,126 @@ TArray<FString> ALevelGrid::GetPlayerNames()
 
 	return PlayerNames;
 }
+
+
+TArray<ICellOccupantInterface*> ALevelGrid::GetCellObstacles(FIntPoint Cell) const
+{
+	TArray<ICellOccupantInterface*> ObstaclesInCell;
+
+	if (CellOccupants.Contains(Cell))
+	{
+		TSet<ICellOccupantInterface*> CellSet = CellOccupants[Cell];
+
+		for (auto& Elem : CellSet)
+		{
+			ABomb* CellBomb = Cast<ABomb>(Elem);
+			AExplosion* CellExplosion = Cast<AExplosion>(Elem);
+			ABlock* CellBlock = Cast<ABlock>(Elem);
+			if (CellBomb)
+			{
+				ObstaclesInCell.Add(CellBomb);
+			}
+			else if (CellBlock)
+			{
+				ObstaclesInCell.Add(CellBlock);
+			}
+			else if (CellExplosion)
+			{
+				ObstaclesInCell.Add(CellExplosion);
+			}
+		}
+	}
+
+	return ObstaclesInCell;
+}
+
+TArray<ICellOccupantInterface*> ALevelGrid::GetObstaclesFromCell(FIntPoint Cell) const
+{
+	TArray<ICellOccupantInterface*> ObstaclesFound;
+
+	TArray<FIntPoint> PosibleDirections = MovementDirections;
+
+	TArray<ICellOccupantInterface*> ObstaclesInCell = GetCellObstacles(Cell);
+	ObstaclesFound.Append(ObstaclesInCell);
+
+	if (ObstaclesInCell.Num() > 0)
+	{
+		return ObstaclesInCell;
+	}
+
+	for (int RadiusIndex = 1; PosibleDirections.Num() > 0; ++RadiusIndex)
+	{
+		for (int DirectionIndex = PosibleDirections.Num() - 1; DirectionIndex >= 0; --DirectionIndex)
+		{
+			FIntPoint NextCell = Cell + (PosibleDirections[DirectionIndex] * RadiusIndex);
+			
+			TArray<ICellOccupantInterface*> ObstaclesInCell = GetCellObstacles(NextCell);
+
+			if (ObstaclesInCell.Num() > 0)
+			{
+				ObstaclesFound.Append(ObstaclesInCell);
+				PosibleDirections.RemoveAt(DirectionIndex);
+			}
+		}
+	}
+
+	return ObstaclesFound;
+}
+
+bool ALevelGrid::IsCellSafe(FIntPoint Cell) const
+{
+	TArray<ICellOccupantInterface*> Obstacles = GetObstaclesFromCell(Cell);
+
+	for (int ObstacleIndex = 0; ObstacleIndex < Obstacles.Num(); ++ObstacleIndex)
+	{
+		ICellOccupantInterface* Obstacle = Obstacles[ObstacleIndex];
+		if (Obstacle)
+		{
+			ABomb* CellBomb = Cast<ABomb>(Obstacle);
+			if (CellBomb)
+			{
+				return false;
+			}
+		}		
+	}
+	return true;
+}
+
+bool ALevelGrid::CellHasEscapeRoute(FIntPoint Cell) const
+{
+	TArray<FIntPoint> PosibleDirections = MovementDirections;
+
+	for (int RadiusIndex = 1; PosibleDirections.Num() > 0; ++RadiusIndex)
+	{
+		for (int DirectionIndex = PosibleDirections.Num() - 1; DirectionIndex >= 0; --DirectionIndex)
+		{
+			FIntPoint NextCell = Cell + (PosibleDirections[DirectionIndex] * RadiusIndex);
+
+			TArray<ICellOccupantInterface*> ObstaclesInCell = GetCellObstacles(NextCell);
+			if (ObstaclesInCell.Num() > 0)
+			{
+				PosibleDirections.RemoveAt(DirectionIndex);
+			}
+			else
+			{
+				TArray<FIntPoint> AdjacentCellsDirections = MovementDirections;
+
+				// Check only Cells perpendicular to the direction currently being checked
+				AdjacentCellsDirections.Remove(PosibleDirections[DirectionIndex]);
+				AdjacentCellsDirections.Remove(PosibleDirections[DirectionIndex] * -1);
+				for (int AdjacentCellIndex = AdjacentCellsDirections.Num() -1; AdjacentCellIndex >= 0; --AdjacentCellIndex)
+				{
+					FIntPoint AdjacentCell = NextCell + AdjacentCellsDirections[AdjacentCellIndex];
+					if (IsCellWalkable(AdjacentCell) && IsCellSafe(AdjacentCell))
+					{
+						return true;
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+

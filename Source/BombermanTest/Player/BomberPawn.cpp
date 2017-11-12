@@ -65,6 +65,11 @@ void ABomberPawn::Tick(float DeltaTime)
 
 void ABomberPawn::Move(float DeltaTime)
 {
+	if (!bIsAlive)
+	{
+		return;
+	}
+
 	if (!CurrentVelocity.IsZero())
 	{
 		FVector CurrentActorLocation = GetActorLocation();
@@ -120,8 +125,7 @@ void ABomberPawn::Move(float DeltaTime)
 			if (NewCell != CurrentCell)
 			{
 				CurrentLevelGrid->ChangeCell(this, CurrentCell, NewCell);
-				CurrentCell = NewCell;
-
+				SetCurrentCell(NewCell);
 			}
 		}
 	}
@@ -153,7 +157,8 @@ void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int
 		FVector2D StartingLocation2D = CurrentLevelGrid->GetWorldCoordinatesFromCell(StartingCell);
 		FVector StartingLocation = FVector(StartingLocation2D.X, StartingLocation2D.Y, CurrentLevelGrid->GetActorLocation().Z);
 		SetActorLocation(StartingLocation);
-		CurrentCell = StartingCell;
+		SetCurrentCell(StartingCell);
+		LastCell = CurrentCell;
 		CurrentLevelGrid->EnterCell(this, CurrentCell);
 
 		Reset();
@@ -209,6 +214,10 @@ void ABomberPawn::IncreaseRemoteBombsTime(float Increase)
 
 void ABomberPawn::PlaceBomb()
 {	
+	if (!bIsAlive)
+	{
+		return;
+	}
 	ABomb* AvailableBomb = NULL;
 	for (int bombIndex = 0; bombIndex < BombPool.Num(); ++bombIndex)
 	{
@@ -245,14 +254,13 @@ void ABomberPawn::PlaceBomb()
 		FVector2D ActorLocation2D = FVector2D(ActorLocation.X, ActorLocation.Y);
 		if (CurrentLevelGrid)
 		{
-			FIntPoint CurrentCell = CurrentLevelGrid->GetCellFromWorldCoordinates(ActorLocation2D);
 			if (AvailableBomb->PlaceInWorld(CurrentLevelGrid, CurrentCell))
 			{
 				PlacedBombs++;
-				if (GEngine)
-				{
-					GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Bomb placed at %d - %d!"), CurrentCell.X, CurrentCell.Y));
-				}
+				//if (GEngine)
+				//{
+				//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Bomb placed at %d - %d!"), CurrentCell.X, CurrentCell.Y));
+				//}
 			}	
 		}
 	}
@@ -263,10 +271,10 @@ bool ABomberPawn::OnDamaged()
 {
 	if (bIsAlive)
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Dead player at %d - %d!"), CurrentCell.X, CurrentCell.Y));
-		}
+		//if (GEngine)
+		//{
+		//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Dead player at %d - %d!"), CurrentCell.X, CurrentCell.Y));
+		//}
 
 		RemoveFromGame();
 		return true;
@@ -293,4 +301,14 @@ bool ABomberPawn::RemoveFromGame()
 bool ABomberPawn::IsWalkable() const
 {
 	return true;
+}
+
+void ABomberPawn::SetCurrentCell(FIntPoint Cell)
+{
+	CurrentCell = Cell;
+}
+
+const FIntPoint ABomberPawn::GetCurrentCell() const
+{
+	return CurrentCell;
 }

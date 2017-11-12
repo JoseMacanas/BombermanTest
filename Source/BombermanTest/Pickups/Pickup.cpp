@@ -53,3 +53,13 @@ void APickup::ApplyEffects(ABomberPawn* Player)
 {
 
 }
+
+void APickup::SetCurrentCell(FIntPoint Cell)
+{
+	CurrentCell = Cell;
+}
+
+const FIntPoint APickup::GetCurrentCell() const
+{
+	return CurrentCell;
+}

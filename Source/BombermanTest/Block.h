@@ -29,6 +29,8 @@ public:
 	virtual bool OnDamaged() override;
 	virtual bool RemoveFromGame() override;
 	virtual bool IsWalkable() const override;
+	virtual void SetCurrentCell(FIntPoint Cell) override;
+	virtual const FIntPoint GetCurrentCell() const override;
 
 	UPROPERTY(EditAnywhere)
 	bool bIsBreakable = false;

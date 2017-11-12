@@ -56,3 +56,14 @@ bool ABlock::IsWalkable() const
 {
 	return false;
 }
+
+
+void ABlock::SetCurrentCell(FIntPoint Cell)
+{
+	CurrentCell = Cell;
+}
+
+const FIntPoint ABlock::GetCurrentCell() const
+{
+	return CurrentCell;
+}

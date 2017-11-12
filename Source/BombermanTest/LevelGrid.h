@@ -54,7 +54,10 @@ public:
 	// Returns true if the fire goes through (it isn't blocked), and false if the explosion fire is blocked at this location
 	bool SpawnExplosionFire(UWorld* const World, FActorSpawnParameters SpawnParams, FIntPoint Cell, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers);
 
-	
+	TArray<ICellOccupantInterface*> GetObstaclesFromCell(FIntPoint Cell) const;
+	TArray<ICellOccupantInterface*> GetCellObstacles(FIntPoint Cell) const;
+	bool CellHasEscapeRoute(FIntPoint Cell) const;
+	bool IsCellSafe(FIntPoint Cell) const;
 
 	void SetStartingPositions();
 	void SetMovementDirections();

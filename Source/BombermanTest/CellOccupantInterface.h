@@ -19,4 +19,7 @@ public:
 	virtual bool OnDamaged() = 0;
 	virtual bool RemoveFromGame() = 0;
 	virtual bool IsWalkable() const = 0;
+
+	virtual void SetCurrentCell(FIntPoint Cell) = 0;
+	virtual const FIntPoint GetCurrentCell() const = 0;
 };

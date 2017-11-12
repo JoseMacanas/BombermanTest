@@ -28,11 +28,13 @@ void ABomb::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	ExplodeTimer -= DeltaTime;
-
-	if (ExplodeTimer <= 0)
+	if (bPlacedInWorld)
 	{
-		Explode();
+		ExplodeTimer -= DeltaTime;
+		if (ExplodeTimer <= 0)
+		{
+			Explode();
+		}
 	}
 }
 
@@ -41,7 +43,7 @@ bool ABomb::PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell)
 	if (OccupiedLevelGrid)
 	{
 		CurrentLevelGrid = OccupiedLevelGrid;
-		CurrentCell = Cell;
+		SetCurrentCell(Cell);
 		
 		if (CurrentLevelGrid->IsCellWalkable(CurrentCell))
 		{
@@ -106,4 +108,14 @@ bool ABomb::RemoveFromGame()
 bool ABomb::IsWalkable() const
 {
 	return false;
+}
+
+void ABomb::SetCurrentCell(FIntPoint Cell)
+{
+	CurrentCell = Cell;
+}
+
+const FIntPoint ABomb::GetCurrentCell() const
+{
+	return CurrentCell;
 }

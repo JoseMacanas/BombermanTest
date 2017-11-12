@@ -62,3 +62,14 @@ bool AExplosion::IsWalkable() const
 {
 	return true;
 }
+
+
+void AExplosion::SetCurrentCell(FIntPoint Cell)
+{
+	CurrentCell = Cell;
+}
+
+const FIntPoint AExplosion::GetCurrentCell() const
+{
+	return CurrentCell;
+}
