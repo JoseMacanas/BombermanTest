@@ -17,5 +17,5 @@ class BOMBERMANTEST_API APickupRemoteBombs : public APickup
 	virtual void ApplyEffects(ABomberPawn* Player) override;
 
 	UPROPERTY(EditDefaultsOnly)
-	float TimeIncrease = 10000.f;
+	float TimeIncrease = 10.f;
 };
