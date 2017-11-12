@@ -182,6 +182,7 @@ void ALevelGrid::Tick(float DeltaTime)
 
 }
 
+
 void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell)
 {
 	if (!CellOccupants.Contains(Cell))
@@ -227,6 +228,23 @@ void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell
 		for (auto& Elem : CellSet)
 		{
 			Elem->OnDamaged();
+		}
+
+		// Notify gamestate of players dying when they walk on an existing explosion
+		if (Player)
+		{
+			UWorld* const World = GetWorld();
+			if (World)
+			{
+				ABombermanTestGameStateBase* GameState = World->GetGameState<ABombermanTestGameStateBase>();
+
+				if (GameState)
+				{
+					TArray<int> AffectedPlayers;
+					AffectedPlayers.Add(Player->PlayerId);
+					GameState->OnPlayerDeath(AffectedPlayers);
+				}
+			}
 		}
 	}
 }

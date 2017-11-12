@@ -26,20 +26,23 @@ void ABombermanTestGameModeBase::Tick(float DeltaTime)
 		}
 		if (RoundTimer <= 0)
 		{
-			AddScoresAndEndGame();
+			AddScoresAndEndGame(true);
 		}
 	}
 }
 
-void ABombermanTestGameModeBase::AddScoresAndEndGame()
+void ABombermanTestGameModeBase::AddScoresAndEndGame(bool bIsTimeOut /*= false*/)
 {
 	TArray<int> RoundWinners;
 	TArray<int> Scores;
 
 	if (CurrentGameState)
 	{
-		CurrentGameState->AddScores();
-		RoundWinners = CurrentGameState->LivingPlayers;
+		if (!bIsTimeOut)
+		{
+			CurrentGameState->AddScores();
+			RoundWinners = CurrentGameState->LivingPlayers;
+		}
 		Scores = CurrentGameState->Scores;
 	}
 
@@ -55,7 +58,7 @@ bool ABombermanTestGameModeBase::OnGameRestart()
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GameRestart"));
 	}
 
-	RoundTimer = RoundTimeSeconds * 1000;
+	RoundTimer = RoundTimeSeconds;
 	if (CurrentLevelGrid)
 	{
 		CurrentLevelGrid->RestartGame();

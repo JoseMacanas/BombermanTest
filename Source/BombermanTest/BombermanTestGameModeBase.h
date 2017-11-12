@@ -31,7 +31,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	bool OnGameEnd(const TArray<FString>& PlayerNames, const TArray<int>& Scores, const TArray<int>& RoundWinners);
 
-	void AddScoresAndEndGame();
+	void AddScoresAndEndGame(bool bIsTimeOut = false);
 
 	UFUNCTION(BlueprintCallable)
 	bool OnGameRestart();
@@ -42,6 +42,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	int RoundTimeSeconds = 600;
 
+	UPROPERTY(BlueprintReadOnly)
 	float RoundTimer = 0;
 
 	TArray<FString> PlayerNames;
