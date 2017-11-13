@@ -600,4 +600,42 @@ bool ALevelGrid::CellHasEscapeRoute(FIntPoint Cell) const
 	return false;
 }
 
+// Provide the camera the current area of interest
+void ALevelGrid::GetCurrentAreaOfInterest(FVector& OutCenterOfInterest, FVector2D& OutSizeOfInterest)
+{
+	FIntPoint MaxCoordinates = FIntPoint(0, 0);
+	FIntPoint MinCoordinates = FIntPoint(GridWidth + 2, GridHeight + 2);
 
+	for (int PlayerIndex = 0; PlayerIndex < Players.Num(); ++PlayerIndex)
+	{
+		ABomberPawn* Player = Players[PlayerIndex];
+		if (Player)
+		{
+			FIntPoint PlayerCell = Player->GetCurrentCell();
+			if (PlayerCell.X >= MaxCoordinates.X)
+			{
+				MaxCoordinates.X = PlayerCell.X + 1;
+			}
+			if (PlayerCell.X <= MinCoordinates.X)
+			{
+				MinCoordinates.X = PlayerCell.X - 1;
+			}
+
+			if (PlayerCell.Y >= MaxCoordinates.Y)
+			{
+				MaxCoordinates.Y = PlayerCell.Y + 1;
+			}
+			if (PlayerCell.Y <= MinCoordinates.Y)
+			{
+				MinCoordinates.Y = PlayerCell.Y - 1;
+			}
+		}
+	}
+
+	FIntPoint Diff = MaxCoordinates - MinCoordinates;
+	
+	// TODO: Use the resized area of interest, Diff, instead of the whole grid, to allow camera panning
+
+	OutSizeOfInterest = FVector2D(GridWidth + 2, GridHeight + 2)*CellSize;
+	OutCenterOfInterest = GetActorLocation() + FVector(OutSizeOfInterest.X*0.5f - CellSize*0.5f, OutSizeOfInterest.Y*0.5f - CellSize*0.5f, GetActorLocation().Z); // CellSize*0.5f because blocks are placed in the center of each cell
+}

@@ -4,10 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-
-// This can't be forward declared because it needs to be exposed to the blueprint (UPROPERTY(EditInstanceOnly))
-#include "Player/BomberPawn.h"
-
 #include "LevelGrid.generated.h"
 
 class ICellOccupantInterface;
@@ -70,6 +66,9 @@ public:
 	// Also keeps track of players killed in the reaction and updates the GameState accordingly
 	void SpawnChainReaction(ABomb* Bomb);
 	
+	// Provide the camera the current area of interest
+	void GetCurrentAreaOfInterest(FVector& OutCenterOfInterest, FVector2D& OutSizeOfInterest);
+
 
 	// AI Awareness functions //
 
