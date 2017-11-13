@@ -29,23 +29,29 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// ICellOccupantInterface //
 	virtual bool OnDamaged() override;
 	virtual bool RemoveFromGame() override;
 	virtual bool IsWalkable() const override;
 	virtual void SetCurrentCell(FIntPoint Cell) override;
 	virtual const FIntPoint GetCurrentCell() const override;
+	// End ICellOccupantInterface //
 
+	// Place in the grid
 	bool PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell);
 
+	// Spawn a chain reaction
 	void Explode();
 
+	// If false, the Bomb exists only in the owner player pool. If true, the Bomb exists in a Grid and Ticks
+	UPROPERTY()
 	bool bPlacedInWorld = false;
-	
-	float ExplodeTimer;
 
+	// How long the Bomb lasts before exploding
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ExplodeDelay = 3.0f;
 
+	// Default explosion size. The owner BomberPawn will set this value when placing the bomb
 	UPROPERTY()
 	int ExplosionSize = 3;
 
@@ -57,4 +63,9 @@ public:
 
 	UPROPERTY()
 	ABomberPawn* OwnerPlayer;
+
+
+protected:
+	UPROPERTY()
+	float ExplodeTimer = 0.f;
 };

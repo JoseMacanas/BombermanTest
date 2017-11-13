@@ -22,10 +22,13 @@ void ABomberPawnAIController::BeginPlay()
 	Super::BeginPlay();
 }
 
+
+// Called when the AI Controller takes ownership of the Pawn
 void ABomberPawnAIController::Possess(APawn* InPawn)
 {
 	Super::Possess(InPawn);
 
+	// Get references to the BomberPawn and CurrentLevelGrid for ease of access
 	BomberPawn = Cast<ABomberPawn>(InPawn);
 
 	if (BomberPawn)
@@ -34,13 +37,11 @@ void ABomberPawnAIController::Possess(APawn* InPawn)
 	}
 
 	RandomNumberGenerator.GenerateNewSeed();
-
-	//if (GEngine)
-	//{
-	//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("AI PAWN placed at %d - %d!"), WalkingDirection.X, WalkingDirection.Y));
-	//}
 }
 
+
+// Provides a random walking direction in the form of a 2D int point with values of -1, 0 or 1 for each coordinate
+// bAvoidCollisions discards walking directions that lead into an obstacle and then selects a random direction from the remaining posibilities
 FIntPoint ABomberPawnAIController::GetRandomWalkingDirection(bool bAvoidCollisions)
 {	
 	FIntPoint NewWalkingDirection = FIntPoint((RandomNumberGenerator.RandRange(0, 1)*-2) + 1, (RandomNumberGenerator.RandRange(0, 1)*-2) + 1);
@@ -68,6 +69,7 @@ FIntPoint ABomberPawnAIController::GetRandomWalkingDirection(bool bAvoidCollisio
 	return NewWalkingDirection;
 }
 
+
 // Called every frame
 void ABomberPawnAIController::Tick(float DeltaTime)
 {
@@ -83,6 +85,7 @@ void ABomberPawnAIController::Tick(float DeltaTime)
 		BomberPawn->MoveXAxis(WalkingDirection.X);
 		BomberPawn->MoveYAxis(WalkingDirection.Y);
 	
+		// If currently waiting, attempt to move again
 		if (WalkingDirection == FIntPoint::ZeroValue)
 		{
 			WalkingDirection = GetRandomWalkingDirection(true);			
@@ -90,63 +93,14 @@ void ABomberPawnAIController::Tick(float DeltaTime)
 
 		if (CurrentLevelGrid)
 		{
-			TArray<ICellOccupantInterface*> Obstacles = CurrentLevelGrid->GetObstaclesFromCell(BomberPawn->CurrentCell);
-
-			bool bRunningFromObstacle = false;
-
-			for (int ObstacleIndex = 0; ObstacleIndex < Obstacles.Num(); ++ObstacleIndex)
+			if (!AvoidDangers())
 			{
-				ICellOccupantInterface* Obstacle = Obstacles[ObstacleIndex];
-
-				ABomb* Bomb = Cast<ABomb>(Obstacle);
-				AExplosion* Explosion = Cast<AExplosion>(Obstacle);
-
-				FIntPoint DangerCell;
-				if (Bomb)
-				{
-					DangerCell = Bomb->CurrentCell;
-				}
-				else if(Explosion)
-				{
-					DangerCell = Explosion->CurrentCell;
-				}
-
-				if (Bomb || Explosion)
-				{
-					bRunningFromObstacle = true;
-					if ( DangerCell == BomberPawn->CurrentCell 
-						&& !CurrentLevelGrid->IsCellWalkable(BomberPawn->CurrentCell + FIntPoint(WalkingDirection.X, 0))
-							&& !CurrentLevelGrid->IsCellWalkable(BomberPawn->CurrentCell + FIntPoint(0, WalkingDirection.Y)) )
-					{
-						WalkingDirection = GetRandomWalkingDirection(true);
-					}
-					else if (DangerCell != BomberPawn->CurrentCell)
-					{
-						WalkingDirection = BomberPawn->CurrentCell - DangerCell;
-
-						WalkingDirection = FIntPoint(FMath::Sign(WalkingDirection.X), FMath::Sign(WalkingDirection.Y));
-
-						if (CurrentLevelGrid->IsCellWalkable(BomberPawn->CurrentCell + FIntPoint(WalkingDirection.Y, WalkingDirection.X)))
-						{
-							WalkingDirection = FIntPoint(WalkingDirection.Y, WalkingDirection.X);
-						}
-						else if (CurrentLevelGrid->IsCellWalkable(BomberPawn->CurrentCell + FIntPoint(WalkingDirection.Y, WalkingDirection.X) *-1))
-						{
-							WalkingDirection = FIntPoint(WalkingDirection.Y, WalkingDirection.X)*-1;
-						}
-
-						WalkingDirection = FIntPoint(FMath::Sign(WalkingDirection.X), FMath::Sign(WalkingDirection.Y));
-	
-					}
-					break;
-				}
-			}
-			if (!bRunningFromObstacle)
-			{
+				// If a bomb can be placed and the player can run away from it, place a bomb
 				if (CurrentLevelGrid->CellHasEscapeRoute(BomberPawn->CurrentCell))
 				{
 					BomberPawn->PlaceBomb();
 				}
+				// Otherwise, wait
 				else if (!CurrentLevelGrid->IsCellWalkable(BomberPawn->CurrentCell + WalkingDirection) 
 					|| !CurrentLevelGrid->IsCellSafe(BomberPawn->CurrentCell + WalkingDirection) )
 				{
@@ -155,4 +109,66 @@ void ABomberPawnAIController::Tick(float DeltaTime)
 			}
 		}
 	}
+}
+
+
+// Check the Grid for any dangers (Bombs or Explosions) and set WalkingDirection to avoid them
+bool ABomberPawnAIController::AvoidDangers()
+{
+	bool bRunningFromObstacle = false;
+
+	if (CurrentLevelGrid)
+	{
+		TArray<ICellOccupantInterface*> Obstacles = CurrentLevelGrid->GetObstaclesFromCell(BomberPawn->CurrentCell);		
+
+		for (int ObstacleIndex = 0; ObstacleIndex < Obstacles.Num(); ++ObstacleIndex)
+		{
+			ICellOccupantInterface* Obstacle = Obstacles[ObstacleIndex];
+
+			ABomb* Bomb = Cast<ABomb>(Obstacle);
+			AExplosion* Explosion = Cast<AExplosion>(Obstacle);
+
+			FIntPoint DangerCell;
+			if (Bomb)
+			{
+				DangerCell = Bomb->CurrentCell;
+			}
+			else if (Explosion)
+			{
+				DangerCell = Explosion->CurrentCell;
+			}
+
+			if (Bomb || Explosion)
+			{
+				bRunningFromObstacle = true;
+				if (DangerCell == BomberPawn->CurrentCell
+					&& !CurrentLevelGrid->IsCellWalkable(BomberPawn->CurrentCell + FIntPoint(WalkingDirection.X, 0))
+					&& !CurrentLevelGrid->IsCellWalkable(BomberPawn->CurrentCell + FIntPoint(0, WalkingDirection.Y)))
+				{
+					WalkingDirection = GetRandomWalkingDirection(true);
+				}
+				else if (DangerCell != BomberPawn->CurrentCell)
+				{
+					WalkingDirection = BomberPawn->CurrentCell - DangerCell;
+
+					WalkingDirection = FIntPoint(FMath::Sign(WalkingDirection.X), FMath::Sign(WalkingDirection.Y));
+
+					FIntPoint PerpendicularDirection1 = FIntPoint(WalkingDirection.Y, WalkingDirection.X);
+					FIntPoint PerpendicularDirection2 = FIntPoint(WalkingDirection.Y, WalkingDirection.X) *-1;
+
+					if (CurrentLevelGrid->IsCellWalkable(BomberPawn->CurrentCell + PerpendicularDirection1))
+					{
+						WalkingDirection = PerpendicularDirection1;
+					}
+					else if (CurrentLevelGrid->IsCellWalkable(BomberPawn->CurrentCell + PerpendicularDirection2))
+					{
+						WalkingDirection = PerpendicularDirection2;
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	return bRunningFromObstacle;
 }

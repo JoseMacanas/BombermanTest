@@ -5,11 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "CellOccupantInterface.h"
+#include "Explosion.generated.h"
 
 class ALevelGrid;
 
-#include "Explosion.generated.h"
-
+// This represents a single Cell on fire
 UCLASS()
 class BOMBERMANTEST_API AExplosion : public AActor, public ICellOccupantInterface
 {
@@ -30,22 +30,27 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// ICellOccupantInterface //
 	virtual bool OnDamaged() override;
 	virtual bool RemoveFromGame() override;
 	virtual bool IsWalkable() const override;
 	virtual void SetCurrentCell(FIntPoint Cell) override;
 	virtual const FIntPoint GetCurrentCell() const override;
+	// End ICellOccupantInterface //
 	
-	float TimeToLive;
-
+	// How long does the explosion stay in the world
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ExplosionDuration = 1.0f;
-
 
 	UPROPERTY()
 	ALevelGrid* CurrentLevelGrid;
 
 	UPROPERTY()
 	FIntPoint CurrentCell;	
+
+
+protected:
+	UPROPERTY()
+	float TimeToLive;
 
 };

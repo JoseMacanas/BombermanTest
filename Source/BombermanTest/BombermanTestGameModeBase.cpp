@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BombermanTestGameModeBase.h"
-#include "Engine.h"
-#include "LevelGrid.h"
-
 #include "BombermanTestGameStateBase.h"
+#include "LevelGrid.h"
+#include "Engine.h"
+
 
 // Sets default values
 ABombermanTestGameModeBase::ABombermanTestGameModeBase()
@@ -23,14 +23,17 @@ void ABombermanTestGameModeBase::Tick(float DeltaTime)
 		if (RoundTimer > 0)
 		{
 			RoundTimer -= DeltaTime;
-		}
-		if (RoundTimer <= 0)
-		{
-			AddScoresAndEndGame(true);
+
+			if (RoundTimer <= 0)
+			{
+				AddScoresAndEndGame(true);
+			}
 		}
 	}
 }
 
+
+// Gathers the players' scores and the winners of the round to call the Blueprint function OnGameEnd()
 void ABombermanTestGameModeBase::AddScoresAndEndGame(bool bIsTimeOut /*= false*/)
 {
 	TArray<int> RoundWinners;
@@ -50,13 +53,13 @@ void ABombermanTestGameModeBase::AddScoresAndEndGame(bool bIsTimeOut /*= false*/
 }
 
 
-
+// Callback from UI to restart the game. Also called from code for the first round
 bool ABombermanTestGameModeBase::OnGameRestart()
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GameRestart"));
-	}
+	//if (GEngine)
+	//{
+	//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GameRestart"));
+	//}
 
 	RoundTimer = RoundTimeSeconds;
 	if (CurrentLevelGrid)
@@ -67,6 +70,8 @@ bool ABombermanTestGameModeBase::OnGameRestart()
 		{
 			PlayerNames = CurrentLevelGrid->GetPlayerNames();
 			CurrentGameState->NewRound(PlayerNames.Num());
+
+			return true;
 		}
 	}
 
@@ -93,10 +98,10 @@ void ABombermanTestGameModeBase::BeginPlay()
 		}
 	}
 		
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GameModeBeginPlay"));
-	}
+	//if (GEngine)
+	//{
+	//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("GameModeBeginPlay"));
+	//}
 
 	OnGameRestart();
 }

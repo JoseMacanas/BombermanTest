@@ -2,9 +2,7 @@
 
 #include "BombermanTestGameStateBase.h"
 #include "BombermanTestGameModeBase.h"
-
 #include "Engine.h"
-
 
 
 // Sets default values
@@ -16,12 +14,8 @@ ABombermanTestGameStateBase::ABombermanTestGameStateBase()
 	}	
 }
 
-bool ABombermanTestGameStateBase::IsGameOver()
-{
-	bool IsRoundOver = (LivingPlayers.Num() <= 1);
-	return false;
-}
 
+// Reset living players and set the scores to 0 if not set yet
 void ABombermanTestGameStateBase::NewRound(int NumberOfPlayers)
 {
 	LivingPlayers.Empty();
@@ -36,6 +30,9 @@ void ABombermanTestGameStateBase::NewRound(int NumberOfPlayers)
 	}	
 }
 
+
+// Called when one of more players dies. The reason this is not called by the players themselves is 
+// to take into account the death of multiple players in a single chain reaction
 void ABombermanTestGameStateBase::OnPlayerDeath(const TArray<int>& DeadPlayers)
 {
 	for (int PlayerIterator = 0; PlayerIterator < DeadPlayers.Num(); ++PlayerIterator)
@@ -63,6 +60,7 @@ void ABombermanTestGameStateBase::OnPlayerDeath(const TArray<int>& DeadPlayers)
 }
 
 
+// Add a point to every living player
 void ABombermanTestGameStateBase::AddScores()
 {
 	for (int LivingPlayerIndex = 0; LivingPlayerIndex < LivingPlayers.Num(); ++LivingPlayerIndex)

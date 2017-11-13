@@ -12,11 +12,13 @@ ABlock::ABlock()
 
 }
 
+
 // Called when the game starts or when spawned
 void ABlock::BeginPlay()
 {
 	Super::BeginPlay();	
 }
+
 
 // Called every frame
 void ABlock::Tick(float DeltaTime)
@@ -24,6 +26,7 @@ void ABlock::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+
 
 bool ABlock::OnDamaged()
 {
@@ -39,6 +42,7 @@ bool ABlock::OnDamaged()
 	RemoveFromGame();
 	return true;
 }
+
 
 bool ABlock::RemoveFromGame()
 {
@@ -56,7 +60,6 @@ bool ABlock::IsWalkable() const
 {
 	return false;
 }
-
 
 void ABlock::SetCurrentCell(FIntPoint Cell)
 {

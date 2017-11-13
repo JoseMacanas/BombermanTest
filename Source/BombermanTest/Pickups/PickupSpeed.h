@@ -17,5 +17,5 @@ class BOMBERMANTEST_API APickupSpeed : public APickup
 	virtual void ApplyEffects(ABomberPawn* Player) override;
 	
 	UPROPERTY(EditDefaultsOnly)
-	float SpeedIncrease = 100;
+	float SpeedIncrease = 100.f;
 };

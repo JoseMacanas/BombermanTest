@@ -16,9 +16,14 @@ class BOMBERMANTEST_API ABombermanTestGameStateBase : public AGameStateBase
 	ABombermanTestGameStateBase();
 
 public:
+	// Called when one of more players dies. The reason this is not called by the players themselves is 
+	// to take into account the death of multiple players in a single chain reaction
 	void OnPlayerDeath(const TArray<int>& DeadPlayers);
-	bool IsGameOver();
+
+	// Reset living players and set the scores to 0 if not set yet
 	void NewRound(int NumberOfPlayers);
+
+	// Add a point to every living player
 	void AddScores();
 	
 	TArray<int> LivingPlayers;

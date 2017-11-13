@@ -26,12 +26,15 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// ICellOccupantInterface //
 	virtual bool OnDamaged() override;
 	virtual bool RemoveFromGame() override;
 	virtual bool IsWalkable() const override;
 	virtual void SetCurrentCell(FIntPoint Cell) override;
 	virtual const FIntPoint GetCurrentCell() const override;
+	// End ICellOccupantInterface //
 
+	// Can be destroyed with a Bomb Explosion
 	UPROPERTY(EditAnywhere)
 	bool bIsBreakable = false;
 

@@ -4,13 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-
-#include "Player/BomberPawn.h"
-
 #include "InputManagerPawn.generated.h"
 
+class ABomberPawn;
 
 
+// This Pawn is required to re-route a single input device (keyboard) to two different Pawns (Player1 and Player2)
 UCLASS()
 class BOMBERMANTEST_API AInputManagerPawn : public APawn
 {

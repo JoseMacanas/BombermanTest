@@ -43,7 +43,6 @@ bool APickup::RemoveFromGame()
 	return true;
 }
 
-
 bool APickup::IsWalkable() const
 {
 	return true;
@@ -51,7 +50,7 @@ bool APickup::IsWalkable() const
 
 void APickup::ApplyEffects(ABomberPawn* Player)
 {
-
+	//This doesn't really need a base class implementation, but apparently Unreal doesn't like Abstract AActor subclasses
 }
 
 void APickup::SetCurrentCell(FIntPoint Cell)

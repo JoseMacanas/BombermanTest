@@ -38,6 +38,8 @@ void ABomb::Tick(float DeltaTime)
 	}
 }
 
+
+// Place in the grid
 bool ABomb::PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell)
 {
 	if (OccupiedLevelGrid)
@@ -66,6 +68,8 @@ bool ABomb::PlaceInWorld(ALevelGrid* OccupiedLevelGrid, FIntPoint Cell)
 	return false;
 }
 
+
+// Spawn a chain reaction
 void ABomb::Explode()
 {	
 	if (CurrentLevelGrid)
@@ -85,6 +89,7 @@ bool ABomb::OnDamaged()
 	return false;
 }
 
+// Hide the Bomb but don't destroy it, because it will keep existing in the owner BomberPawn's Bomb pool
 bool ABomb::RemoveFromGame()
 {
 	if (CurrentLevelGrid)

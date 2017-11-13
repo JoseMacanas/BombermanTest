@@ -16,14 +16,17 @@ ABomberPawn::ABomberPawn()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+
 // Called when the game starts or when spawned
 void ABomberPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Hide BomberPawn until it is placed in the grid
 	SetActorHiddenInGame(true);
 	SetActorTickEnabled(false);
 
+	// Create Bomb pool
 	if (BombBPClass)
 	{
 		UWorld* const World = GetWorld();
@@ -47,6 +50,22 @@ void ABomberPawn::BeginPlay()
 }
 
 
+// Prepare BomberPawn properties for a new round (explosion range, number of bombs available, etc);
+void ABomberPawn::Reset()
+{
+	bIsAlive = true;
+	SetActorHiddenInGame(false);
+	SetActorTickEnabled(true);
+
+	CurrentRemoteBombsTimer = 0.f;
+	CurrentSpeedIncreases = 0;
+	CurrentSpeed = StartingSpeed;
+	CurrentAvailableBombs = StartingBombs;
+	CurrentExplosionRange = StartingExplosionRange;
+	PlacedBombs = 0;
+}
+
+
 // Called every frame
 void ABomberPawn::Tick(float DeltaTime)
 {
@@ -63,6 +82,21 @@ void ABomberPawn::Tick(float DeltaTime)
 	}	
 }
 
+
+// Called to bind functionality to input
+// This is not really used in the prototype since the real bindings for the keyboard are handled in the InputManagerPawn class, 
+// but it is left implemented because it allows gamepad support
+void ABomberPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAction("PlaceBomb", IE_Pressed, this, &ABomberPawn::PlaceBomb);
+	PlayerInputComponent->BindAxis("XAxis", this, &ABomberPawn::MoveXAxis);
+	PlayerInputComponent->BindAxis("YAxis", this, &ABomberPawn::MoveYAxis);
+}
+
+
+// Apply current velocity, every tick, respecting Grid restrictions
 void ABomberPawn::Move(float DeltaTime)
 {
 	if (!bIsAlive)
@@ -132,20 +166,7 @@ void ABomberPawn::Move(float DeltaTime)
 }
 
 
-void ABomberPawn::Reset()
-{
-	bIsAlive = true;
-	SetActorHiddenInGame(false);
-	SetActorTickEnabled(true);
-
-	CurrentRemoteBombsTimer = 0.f;
-	CurrentSpeedIncreases = 0;
-	CurrentSpeed = StartingSpeed;
-	CurrentAvailableBombs = StartingBombs;
-	CurrentExplosionRange = StartingExplosionRange;
-	PlacedBombs = 0;
-}
-
+// Spawn a BomberPawn inside a Cell in the Grid
 void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int PlayerIndex)
 {
 	if (LevelGrid)
@@ -158,62 +179,29 @@ void ABomberPawn::PlaceInGrid(ALevelGrid* LevelGrid, FIntPoint StartingCell, int
 		FVector StartingLocation = FVector(StartingLocation2D.X, StartingLocation2D.Y, CurrentLevelGrid->GetActorLocation().Z);
 		SetActorLocation(StartingLocation);
 		SetCurrentCell(StartingCell);
-		LastCell = CurrentCell;
 		CurrentLevelGrid->EnterCell(this, CurrentCell);
 
 		Reset();
 	}
 }
 
-// Called to bind functionality to input
-void ABomberPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("PlaceBomb", IE_Pressed, this, &ABomberPawn::PlaceBomb);
-	PlayerInputComponent->BindAxis("XAxis", this, &ABomberPawn::MoveXAxis);
-	PlayerInputComponent->BindAxis("YAxis", this, &ABomberPawn::MoveYAxis);
-}
-
-
+// Input
 void ABomberPawn::MoveXAxis(float AxisValue)
 {
 	CurrentVelocity.X = FMath::Clamp(AxisValue, -1.0f, 1.0f) * CurrentSpeed;
 }
 
+// Input
 void ABomberPawn::MoveYAxis(float AxisValue)
 {
 	CurrentVelocity.Y = FMath::Clamp(AxisValue, -1.0f, 1.0f) * CurrentSpeed;
 }
 
-void ABomberPawn::ReleaseBomb()
-{
-	PlacedBombs--;
-}
 
-void ABomberPawn::IncreaseAvailableBombs(int Increase)
-{
-	CurrentAvailableBombs += Increase;
-}
-
-void ABomberPawn::IncreaseExplosionRange(int Increase)
-{
-	CurrentExplosionRange += Increase;
-}
-
-void ABomberPawn::IncreaseSpeed(float Increase)
-{
-	CurrentSpeed += Increase;
-	CurrentSpeedIncreases++;
-}
-
-void ABomberPawn::IncreaseRemoteBombsTime(float Increase)
-{
-	CurrentRemoteBombsTimer += Increase;
-}
-
+// Places a Bomb or makes an existing Bomb explode if Remote Bombs Pickup timer > 0
 void ABomberPawn::PlaceBomb()
-{	
+{
 	if (!bIsAlive)
 	{
 		return;
@@ -224,7 +212,7 @@ void ABomberPawn::PlaceBomb()
 		if (BombPool[bombIndex])
 		{
 			bool bIsPlacedInWorld = BombPool[bombIndex]->bPlacedInWorld;
-			
+
 			if (CurrentRemoteBombsTimer > 0 && bIsPlacedInWorld)
 			{
 				BombPool[bombIndex]->Explode();
@@ -261,21 +249,57 @@ void ABomberPawn::PlaceBomb()
 				//{
 				//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Bomb placed at %d - %d!"), CurrentCell.X, CurrentCell.Y));
 				//}
-			}	
+			}
 		}
 	}
 }
 
 
+// Called by Bombs when they explode or are removed from the game, to increase the number of usable Bombs from the Bomb pool
+void ABomberPawn::ReleaseBomb()
+{
+	PlacedBombs--;
+}
+
+
+// Player properties for the current round, to be called from Pickups
+void ABomberPawn::IncreaseAvailableBombs(int Increase)
+{
+	if (CurrentAvailableBombs < MaxBombs)
+	{
+		CurrentAvailableBombs += Increase;
+	}
+}
+
+void ABomberPawn::IncreaseExplosionRange(int Increase)
+{
+	if (CurrentExplosionRange < MaxExplosionRange)
+	{
+		CurrentExplosionRange += Increase;
+	}	
+}
+
+void ABomberPawn::IncreaseSpeed(float Increase)
+{
+	if (CurrentSpeedIncreases < MaxSpeedIncreases)
+	{
+		CurrentSpeed += Increase;
+		CurrentSpeedIncreases++;
+	}
+}
+
+void ABomberPawn::IncreaseRemoteBombsTime(float Increase)
+{
+	CurrentRemoteBombsTimer += Increase;
+}
+
+
+
+// ICellOccupantInterface //
 bool ABomberPawn::OnDamaged()
 {
 	if (bIsAlive)
 	{
-		//if (GEngine)
-		//{
-		//	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("Dead player at %d - %d!"), CurrentCell.X, CurrentCell.Y));
-		//}
-
 		RemoveFromGame();
 		return true;
 	}

@@ -21,12 +21,15 @@ ALevelGrid::ALevelGrid()
 	SetMovementDirections();
 }
 
+
 // Called when the game starts or when spawned
 void ALevelGrid::BeginPlay()
 {
 	Super::BeginPlay();	
 }
 
+
+// Clear the current grid, generate a new one and place the players on it 
 void ALevelGrid::RestartGame()
 {
 	for (auto CellOccupantIterator = CellOccupants.CreateConstIterator(); CellOccupantIterator; ++CellOccupantIterator)
@@ -45,6 +48,8 @@ void ALevelGrid::RestartGame()
 	PlacePlayers();
 }
 
+
+// Locate the Grid corners, depending on the Grid size, to be used for the initial positions of the Players
 void ALevelGrid::SetStartingPositions()
 {
 	StartingPositions.Empty();
@@ -57,6 +62,8 @@ void ALevelGrid::SetStartingPositions()
 	StartingPositions.Add(FIntPoint(GridWidth, 1));
 }
 
+
+// Set all the valid movement directions in the grid (North, South, East, West)
 void ALevelGrid::SetMovementDirections()
 {
 	MovementDirections.Empty();
@@ -69,7 +76,7 @@ void ALevelGrid::SetMovementDirections()
 }
 
 
-
+// Place players in the grid corners
 void ALevelGrid::PlacePlayers()
 {
 	for (int PlayerIndex = 0; PlayerIndex < Players.Num(); ++PlayerIndex)
@@ -83,6 +90,7 @@ void ALevelGrid::PlacePlayers()
 }
 
 
+// Spawns a random pickup from the available pickup clases in the specified Cell
 void ALevelGrid::SpawnRandomPickup(FIntPoint Cell)
 {
 	bool bShouldSpawnPickup = RandomNumberGenerator.RandRange(0, 9) <= 2;
@@ -91,7 +99,7 @@ void ALevelGrid::SpawnRandomPickup(FIntPoint Cell)
 	{
 		if (PickupBPClasses.Num() > 0)
 		{
-			// Change the random function to make certainpickups more likely to spawn
+			// Change the random function to make certain pickups more likely to spawn
 			int PickupIndex = RandomNumberGenerator.RandRange(0, PickupBPClasses.Num() - 1);
 
 			UClass * PickupBPClass = PickupBPClasses[PickupIndex];
@@ -114,6 +122,23 @@ void ALevelGrid::SpawnRandomPickup(FIntPoint Cell)
 	}
 }
 
+// Spawn a single block in the Grid
+void ALevelGrid::SpawnBlock(UWorld* const World, FIntPoint Cell, UClass* BlockBPClass, FActorSpawnParameters SpawnParams)
+{
+	if (World)
+	{
+		FVector2D BlockPosition2D = GetWorldCoordinatesFromCell(Cell);
+		FVector BlockPosition = FVector(BlockPosition2D.X, BlockPosition2D.Y, GetActorLocation().Z);
+
+		ABlock* Block = World->SpawnActor<ABlock>(BlockBPClass, BlockPosition, FRotator::ZeroRotator, SpawnParams);
+		Block->CurrentLevelGrid = this;
+		Block->SetCurrentCell(Cell);
+
+		EnterCell(Block, Cell);
+	}
+}
+
+// Procedurally generate a new grid
 void ALevelGrid::GenerateLevel(int RandomSeed)
 {	
 	//RandomNumberGenerator.Initialize(RandomSeed); // DEBUG
@@ -129,6 +154,8 @@ void ALevelGrid::GenerateLevel(int RandomSeed)
 		}
 	}
 	
+	FActorSpawnParameters SpawnParams;
+
 	UWorld* const World = GetWorld();
 	if (World && BorderBlockBPClass && SolidBlockBPClass && BreakableBlockBPClass)
 	{
@@ -137,36 +164,20 @@ void ALevelGrid::GenerateLevel(int RandomSeed)
 			for (int ColumnIndex = 0; ColumnIndex < GridWidth + 2; ++ColumnIndex)
 			{
 				FIntPoint Cell = FIntPoint(RowIndex, ColumnIndex);
-				FVector2D BlockPosition = GetWorldCoordinatesFromCell(Cell);
-
+				
 				if (ColumnIndex == 0 || RowIndex == 0 || ColumnIndex == GridWidth + 1 || RowIndex == GridHeight + 1)
 				{
-					FActorSpawnParameters SpawnParams;
-					ABlock* Block = World->SpawnActor<ABlock>(BorderBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
-					Block->CurrentLevelGrid = this;
-					Block->CurrentCell = Cell;
-
-					EnterCell(Block, Cell);
+					SpawnBlock(World, Cell, BorderBlockBPClass, SpawnParams);
 				}
 				else if (RowIndex % 2 == 0 && ColumnIndex % 2 == 0)
 				{
-					FActorSpawnParameters SpawnParams;
-					ABlock* Block = World->SpawnActor<ABlock>(SolidBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
-					Block->CurrentLevelGrid = this;
-					Block->CurrentCell = Cell;
-
-					EnterCell(Block, Cell);
+					SpawnBlock(World, Cell, SolidBlockBPClass, SpawnParams);
 				}
 				else if (!ClearPositions.Contains(Cell))
 				{
 					if (RandomNumberGenerator.RandRange(0, 10) > 0) // Change this to change the chances of breakable blocks
 					{
-						FActorSpawnParameters SpawnParams;
-						ABlock* Block = World->SpawnActor<ABlock>(BreakableBlockBPClass, FVector(BlockPosition.X, BlockPosition.Y, GetActorLocation().Z), FRotator::ZeroRotator, SpawnParams);
-						Block->CurrentLevelGrid = this;
-						Block->CurrentCell = Cell;
-
-						EnterCell(Block, Cell);
+						SpawnBlock(World, Cell, BreakableBlockBPClass, SpawnParams);
 					}
 				}
 			}
@@ -183,6 +194,7 @@ void ALevelGrid::Tick(float DeltaTime)
 }
 
 
+// A new CellOccuppant occupies a Cell, causing reactions on the existing CellOccupants
 void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell)
 {
 	if (!CellOccupants.Contains(Cell))
@@ -249,6 +261,8 @@ void ALevelGrid::EnterCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell
 	}
 }
 
+
+// Remove a CellOccuppant from a Cell
 void ALevelGrid::ExitCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell)
 {
 	if (CellOccupants.Contains(Cell))
@@ -261,12 +275,16 @@ void ALevelGrid::ExitCell(ICellOccupantInterface* CellOccuppant, FIntPoint Cell)
 	}
 }
 
+
+// Move a CellOccuppant from one cell to another
 void ALevelGrid::ChangeCell(ICellOccupantInterface* CellOccuppant, FIntPoint OldCell, FIntPoint NewCell)
 {
 	ExitCell(CellOccuppant, OldCell);
 	EnterCell(CellOccuppant, NewCell);
 }
 
+
+// Grid coordinate conversion
 FIntPoint ALevelGrid::GetCellFromWorldCoordinates(FVector2D WorldCoordinates) const
 {
 	FIntPoint Cell = FIntPoint::ZeroValue;
@@ -284,6 +302,7 @@ FIntPoint ALevelGrid::GetCellFromWorldCoordinates(FVector2D WorldCoordinates) co
 	return Cell;
 }
 
+// Grid coordinate conversion
 FVector2D ALevelGrid::GetWorldCoordinatesFromCell(FIntPoint Cell) const
 {
 	FVector2D WorldCoordinates = FVector2D::ZeroVector;
@@ -297,6 +316,7 @@ FVector2D ALevelGrid::GetWorldCoordinatesFromCell(FIntPoint Cell) const
 }
 
 
+// Returns true if the Cell doesn't contain any CellOccuppant that blocks player movement
 bool ALevelGrid::IsCellWalkable(FIntPoint Cell) const
 {
 	if (CellOccupants.Contains(Cell))
@@ -320,6 +340,8 @@ bool ALevelGrid::IsCellWalkable(FIntPoint Cell) const
 }
 
 
+// Spawns an explosion blast and all subsequent explosion blasts affected by it
+// Also keeps track of players killed in the reaction and updates the GameState accordingly
 void ALevelGrid::SpawnChainReaction(ABomb* Bomb)
 {
 	TArray<ABomb*> AffectedBombs;
@@ -332,7 +354,7 @@ void ALevelGrid::SpawnChainReaction(ABomb* Bomb)
 		AffectedBombs.Remove(CurrentBomb);
 		if (CurrentBomb)
 		{
-			SpawnExplosion(CurrentBomb, AffectedBombs, AffectedPlayers);
+			SpawnExplosionBlast(CurrentBomb, AffectedBombs, AffectedPlayers);
 		}
 	}
 
@@ -351,7 +373,9 @@ void ALevelGrid::SpawnChainReaction(ABomb* Bomb)
 	}
 }
 
-void ALevelGrid::SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers)
+
+// Spawns a single explosion blast
+void ALevelGrid::SpawnExplosionBlast(ABomb* Bomb, TArray<ABomb*>& InOutAffectedBombs, TArray<int>& InOutAffectedPlayers)
 {
 	if (!Bomb)
 	{
@@ -366,7 +390,7 @@ void ALevelGrid::SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArr
 		TArray<FIntPoint> ExplosionDirections = MovementDirections;
 		FActorSpawnParameters SpawnParams;
 
-		bool bExplosionGoesThrough = SpawnExplosionFire(GetWorld(), SpawnParams, Cell, AffectedBombs, AffectedPlayers);
+		bool bExplosionGoesThrough = SpawnExplosion(GetWorld(), SpawnParams, Cell, InOutAffectedBombs, InOutAffectedPlayers);
 
 		for (int ExplosionRadiusIndex = 1; ExplosionRadiusIndex < ExplosionSize; ++ExplosionRadiusIndex)
 		{
@@ -374,7 +398,7 @@ void ALevelGrid::SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArr
 			{
 				FIntPoint NextAffectedCell = Cell + (ExplosionDirections[DirectionIndex] * ExplosionRadiusIndex);
 				
-				bool bExplosionGoesThrough = SpawnExplosionFire(GetWorld(), SpawnParams, NextAffectedCell, AffectedBombs, AffectedPlayers);
+				bool bExplosionGoesThrough = SpawnExplosion(GetWorld(), SpawnParams, NextAffectedCell, InOutAffectedBombs, InOutAffectedPlayers);
 
 				if (!bExplosionGoesThrough)
 				{
@@ -385,7 +409,9 @@ void ALevelGrid::SpawnExplosion(ABomb* Bomb, TArray<ABomb*>& AffectedBombs, TArr
 	}
 }
 
-bool ALevelGrid::SpawnExplosionFire(UWorld* const World, FActorSpawnParameters SpawnParams, FIntPoint Cell, TArray<ABomb*>& AffectedBombs, TArray<int>& AffectedPlayers)
+
+// Returns true if the fire goes through (it isn't blocked), and false if the explosion fire is blocked at this location
+bool ALevelGrid::SpawnExplosion(UWorld* const World, FActorSpawnParameters SpawnParams, FIntPoint Cell, TArray<ABomb*>& InOutAffectedBombs, TArray<int>& InOutAffectedPlayers)
 {
 	bool bExplosionGoesThrough = true;
 	if (CellOccupants.Contains(Cell))
@@ -399,12 +425,12 @@ bool ALevelGrid::SpawnExplosionFire(UWorld* const World, FActorSpawnParameters S
 			ABlock* CellBlock = Cast<ABlock>(Elem);
 			if (CellBomb)
 			{
-				AffectedBombs.Add(CellBomb);
+				InOutAffectedBombs.Add(CellBomb);
 			}
 			else if (CellPlayer)
 			{
 				CellPlayer->OnDamaged();
-				AffectedPlayers.Add(CellPlayer->PlayerId);
+				InOutAffectedPlayers.Add(CellPlayer->PlayerId);
 			}
 			else if (CellBlock)
 			{
@@ -428,6 +454,8 @@ bool ALevelGrid::SpawnExplosionFire(UWorld* const World, FActorSpawnParameters S
 	return bExplosionGoesThrough;
 }
 
+
+// Get the names of the players placed in the grid
 TArray<FString> ALevelGrid::GetPlayerNames()
 {
 	TArray<FString> PlayerNames;
@@ -445,6 +473,7 @@ TArray<FString> ALevelGrid::GetPlayerNames()
 }
 
 
+// Get the obstacles in the current Cell
 TArray<ICellOccupantInterface*> ALevelGrid::GetCellObstacles(FIntPoint Cell) const
 {
 	TArray<ICellOccupantInterface*> ObstaclesInCell;
@@ -476,6 +505,8 @@ TArray<ICellOccupantInterface*> ALevelGrid::GetCellObstacles(FIntPoint Cell) con
 	return ObstaclesInCell;
 }
 
+
+// Get the obstacles in all four possible movement directions from the current Cell
 TArray<ICellOccupantInterface*> ALevelGrid::GetObstaclesFromCell(FIntPoint Cell) const
 {
 	TArray<ICellOccupantInterface*> ObstaclesFound;
@@ -509,6 +540,8 @@ TArray<ICellOccupantInterface*> ALevelGrid::GetObstaclesFromCell(FIntPoint Cell)
 	return ObstaclesFound;
 }
 
+
+// True if the Cell is not in sight of a bomb
 bool ALevelGrid::IsCellSafe(FIntPoint Cell) const
 {
 	TArray<ICellOccupantInterface*> Obstacles = GetObstaclesFromCell(Cell);
@@ -528,6 +561,8 @@ bool ALevelGrid::IsCellSafe(FIntPoint Cell) const
 	return true;
 }
 
+
+// True if there is a reachable Cell that would protect from a bomb placed in the specified Cell
 bool ALevelGrid::CellHasEscapeRoute(FIntPoint Cell) const
 {
 	TArray<FIntPoint> PosibleDirections = MovementDirections;
